@@ -96,32 +96,6 @@ def install_preset_objects(credentials):
 		idP=admin_privilege['id']
 	))
 
-	admin_quest = Quest(id=str(uuid4()), title="Admin Quest", description="This is a test quest")
-	all_users_quest = Quest(id=str(uuid4()), title="All users Quest", description="")
-	MysqlEntityStorage(Quest,**credentials).create(admin_quest, all_users_quest)
-
-	admin_quest_task_0 = Task(id=str(uuid4()), quest=admin_quest['id'], task_order=0, content="admin task 1")
-	admin_quest_task_1 = Task(id=str(uuid4()), quest=admin_quest['id'], task_order=1, content="admin task 2")
-
-	all_users_quest_task_0 = Task(id=str(uuid4()), quest=all_users_quest['id'], task_order=0, content="all users task 1")
-	all_users_quest_task_1 = Task(id=str(uuid4()), quest=all_users_quest['id'], task_order=1, content="all users task 2")
-	all_users_quest_task_2 = Task(id=str(uuid4()), quest=all_users_quest['id'], task_order=2, content="all users task 3")
-
-	MysqlEntityStorage(Task,**credentials).create(admin_quest_task_0, admin_quest_task_1, all_users_quest_task_0, all_users_quest_task_1, all_users_quest_task_2)
-
-	admin_quest_key = ResourceKey(id=str(uuid4()), resource=admin_quest['id'], resource_type="quest", user=admin_user['id'], resource_key="rwx")
-	all_users_quest_key = ResourceKey(id=str(uuid4()), resource=all_users_quest['id'], resource_type="quest", user=None, resource_key="rwx")
-	MysqlEntityStorage(ResourceKey,**credentials).create(admin_quest_key, all_users_quest_key)
-
-	MysqlEntityStorage(ActiveQuest,**credentials).create(ActiveQuest(user=admin_user['id'],quest=admin_quest['id']))
-
-
-
-
-#INSERT into accountPrivilege(id, label, roles, editable) VALUES ("5442aeeb-b0d6-49da-9e36-76898c74091f", "admin", "*", 0);
-#INSERT into user(id, username, mdp) VALUES ("1cc6a4f4-623c-40ce-8bc0-8a09ee499327", "Y2RuemFz", "NDBvdmVyNDAk");
-#INSERT into userAccount(id, idU, idP) VALUES ("01d15a74-a43f-4cbf-ad8a-29ded8495c96", "1cc6a4f4-623c-40ce-8bc0-8a09ee499327", "5442aeeb-b0d6-49da-9e36-76898c74091f");
-
 
 if __name__ == "__main__":
 	import pprinter

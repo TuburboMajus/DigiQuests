@@ -6,6 +6,10 @@ A quest log flask app to manage your to do list in a fun way with an auto-check 
 The app allows for now for a single user to add and edit quests to the quest log. This is the V0 and more work will be done shortly.
 
 ## install
+
+- Create the mysql database that will be used by the app. If you use another name than 'digiq' then you'll have to update accordingly the files [config.toml](https://github.com/TuburboMajus/DigiQuests/blob/main/config.toml#L20) and [install/install.py](https://github.com/TuburboMajus/DigiQuests/blob/main/install/install.py#L10)
+- Update the file [config.toml](https://github.com/TuburboMajus/DigiQuests/blob/main/config.toml#L18-L19) by writing the mysql user & password with write privileges on all tables on the database created 
+
 ```console
 git clone https://github.com/TuburboMajus/DigiQuests
 cd DigiQuests
