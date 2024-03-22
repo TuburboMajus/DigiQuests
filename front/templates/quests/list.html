@@ -67,13 +67,13 @@
 		</section>
 		{% endif %}
 
-		<div class="row" style="margin-left: 0em !important; justify-content: space-between;">
+		<div class="row"Prendre un  style="margin-left: 0em !important; justify-content: space-between;">
 
 			<button id="edit_quest_btn" class="button submit skr-button-img down_page_button" {% if selected_quest is none or not ('w' in selected_quest_key['resource_key']) %}style="display: none;"{% endif %} onclick="window.location.href='/quest/{{selected_quest['id']}}'">
                 <strong style="font-family: Dovahkiin; font-size: 20px; color: black;">E</strong>&nbsp;Edit Quest
             </button>
 
-			<button id="set_active_btn" class="button submit skr-button-img down_page_button" {% if selected_quest is none or selected_quest['complete'] or (active_quest is not none and selected_quest['id'] == active_quest['id']) %}style="display: None;"{%endif%} onclick="set_active_quest(this)">
+			<button id="set_active_btn" class="button submit skr-button-img down_page_button" {% if selected_quest is none or selected_quest['complete'] or active_quest is none or selected_quest['id'] == active_quest['id'] %}style="display: None;"{%endif%} onclick="set_active_quest(this)">
                 <strong style="font-family: Dovahkiin; font-size: 20px; color: black;">A</strong>&nbsp;Set active quest
             </button>
 
