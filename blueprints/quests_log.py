@@ -42,16 +42,18 @@ def getQuests():
 		resource_type="quest"
 	))
 
-	incomplete_quests = list(Quest.storage.list(
-		In("id",*[UUID4Attribute("id",value=key['resource']) for key in keys]),
-		complete=False,
-		archived=False
-	))
-	complete_quests = list(Quest.storage.list(
-		In("id",*[UUID4Attribute("id",value=key['resource']) for key in keys]),
-		complete=True,
-		archived=False
-	))
+	incomplete_quests = []; complete_quests = []
+	if len(keys) > 0:
+		incomplete_quests = list(Quest.storage.list(
+			In("id",*[UUID4Attribute("id",value=key['resource']) for key in keys]),
+			complete=False,
+			archived=False
+		))
+		complete_quests = list(Quest.storage.list(
+			In("id",*[UUID4Attribute("id",value=key['resource']) for key in keys]),
+			complete=True,
+			archived=False
+		))
 
 	active_quest = ActiveQuest.storage.get(user=current_user['id'])
 	if active_quest is not None:
