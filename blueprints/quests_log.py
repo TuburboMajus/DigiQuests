@@ -64,7 +64,7 @@ def getQuests():
 		else:
 			selected_quest = Quest.storage.get(id=active_quest['quest'])
 
-	selected_quest_tasks = [], selected_quest_key = None
+	selected_quest_tasks = []; selected_quest_key = None
 	if selected_quest is not None:
 		selected_quest_tasks = sorted(Task.storage.list(quest=selected_quest['id']),key=lambda t:t['task_order'])
 		selected_quest_key = [key for key in keys if key['resource'] == selected_quest['id']][0]
