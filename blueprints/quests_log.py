@@ -56,6 +56,7 @@ def getQuests():
 		))
 
 	active_quest = ActiveQuest.storage.get(user=current_user['id'])
+	selected_quest = None
 	if active_quest is not None:
 		selected_quest = request.args.get("quest",active_quest['quest'])
 		if selected_quest != active_quest['quest'] and selected_quest in [key['resource'] for key in keys]:
