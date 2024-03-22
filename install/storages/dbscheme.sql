@@ -10,6 +10,12 @@ use digiq;
  * TABLES
 \******************************/ 
 
+/***** APP *****/
+
+create table digiQuest(
+    version varchar primary key not null
+);
+
 /***** USER *****/
 
 create table user(
@@ -44,12 +50,14 @@ create table userAccount(
 
 create table quest(
     id varchar(36) primary key not null,
+    owner varchar(36) not null,
     title varchar(100) not null,
     description varchar(500),
     complete bool not null default 0,
     archived bool not null default 0,
     reccurence int not null default 0,
-    reccurence_config varchar(250)
+    reccurence_config varchar(250),
+    foreign key (owner) references user(id)
 );
 
 create table task(

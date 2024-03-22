@@ -1,13 +1,16 @@
 from temod.storage.mysql import MysqlEntityStorage
 from subprocess import Popen, PIPE, STDOUT
 from pathlib import Path
+from uuid import uuid4 
 
+import mysql.connector
 import sys
 import re
 import os
 
 
 DATABASE_NAME = "digiq"
+APP_VERSION = "0.0.0"
 
 
 def print_decorated_title(title):
@@ -69,6 +72,33 @@ def get_mysql_credentials():
 	return {"host":host,"port":port, "user":user, "password":password, "database": DATABASE_NAME}
 
 
+def search_existing_database(credentials):
+	try:
+		connexion = mysql.connector.connect(**credentials)
+	except Exception as exc:
+		print("Can't connect to the specified database using these credentials. Verify the credentials and the existence of the database.")
+		print(exc)
+		sys.exit(1)
+
+	cursor = connexion.cursor()
+	cursor.execute('show tables;')
+
+	try:
+		return len(cursor.fetchall()) > 0
+	except:
+		raise
+	finally:
+		cursor.close()
+		connexion.close()
+
+
+def confirm_database_overwrite():
+	print_decorated_title("! DANGER")
+	print("The specified database already exists and is not empty. This installation script will erase all the database content and overwrite it with a clean one.")
+	rpsn = input("Continue the installation (y/*) ?").lower()
+	return rpsn == "y"
+
+
 def create_mysql_cmd(credentials):
 	cmd = ["mysql"]
 	if credentials['host'] and not (credentials['host'] in ['127.0.0.1',"localhost"]):
@@ -82,8 +112,10 @@ def create_mysql_cmd(credentials):
 		cmd.extend([f"-p{credentials['password']}"])
 	return cmd
 
-def install_preset_objects(credentials):
-	from uuid import uuid4 
+def install_preset_objects(credentials):	
+	digiquest = DigiQuest(version=APP_VERSION)
+	MysqlEntityStorage(DigiQuest,**credentials).create(digiquest)
+
 	admin_privilege = AccountPrivilege(id=str(uuid4()), label="admin", roles="*")
 	MysqlEntityStorage(AccountPrivilege,**credentials).create(admin_privilege)
 
@@ -114,6 +146,13 @@ if __name__ == "__main__":
 		from core.entity import *	
 
 	credentials = get_mysql_credentials()
+
+	already_created = search_existing_database(credentials)
+	if already_created:
+		if not confirm_database_overwrite():
+			print("If you which to just update the app, run the script install/update.py")
+			sys.exit(1)
+
 	cmd = create_mysql_cmd(credentials)
 
 	print("Executing cmd:", cmd)
