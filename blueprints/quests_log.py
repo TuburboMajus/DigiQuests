@@ -250,10 +250,10 @@ def setActiveQuest(quest_id):
 	if key is None or not( 'r' in key['resource_key'] ):
 		return abort(403)
 
-	active_quest = ActiveQuest.storage.get(user=current_user['id']).takeSnapshot()
+	active_quest = ActiveQuest.storage.get(user=current_user['id'])
 
 	if active_quest is not None:
-		active_quest['quest'] = quest_id
+		active_quest.takeSnapshot()['quest'] = quest_id
 		ActiveQuest.storage.updateOnSnapshot(active_quest)
 	else:
 		ActiveQuest.storage.create(ActiveQuest(user=current_user['id'],quest=quest_id))
