@@ -69,7 +69,7 @@
 
 		<div class="row" style="margin-left: 0em !important; justify-content: space-between;">
 
-			<button id="edit_quest_btn" class="button submit skr-button-img down_page_button" {% if selected_quest is none and 'w' in selected_quest_key['resource_key'] %}style="display: none;"{% endif %} onclick="window.location.href='/quest/{{selected_quest['id']}}'">
+			<button id="edit_quest_btn" class="button submit skr-button-img down_page_button" {% if selected_quest is none or not ('w' in selected_quest_key['resource_key']) %}style="display: none;"{% endif %} onclick="window.location.href='/quest/{{selected_quest['id']}}'">
                 <strong style="font-family: Dovahkiin; font-size: 20px; color: black;">E</strong>&nbsp;Edit Quest
             </button>
 
