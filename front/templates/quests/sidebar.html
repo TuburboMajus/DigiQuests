@@ -1,0 +1,30 @@
+<!-- Sidebar -->
+<section id="sidebar" class="skr-style" style="padding-top: 0px;">
+	<div class="inner">
+		<nav>
+			<ul id="incomplete_quests_list">
+				{% for quest in incomplete_quests %}
+					<li class="quest_sidebar_item {% if selected_quest['id'] == quest['id'] %}selected{% else %}unselected{% endif %}" data-quest="{{quest['id']}}">
+						<a onclick="on_sidebar_quest_click('{{quest['id']}}')">{{quest['title']}}
+						{% if active_quest['quest'] == quest['id'] %}
+						<img style="vertical-align: bottom;" src="/static/images/active_quest_cursor.jpg">
+						{% endif %}
+						</a>
+					</li>
+				{% endfor %}
+			</ul>
+			{% if incomplete_quests | length > 0%}<hr>{% endif %}
+			<ul id="complete_quests_list">
+				{% for quest in complete_quests %}
+					<li class="quest_sidebar_item {% if selected_quest['id'] == quest['id'] %}selected{% else %}unselected{% endif %}" data-quest="{{quest['id']}}">
+						<a onclick="on_sidebar_quest_click('{{quest['id']}}')">{{quest['title']}}
+						{% if active_quest['quest'] == quest['id'] %}
+						<img style="vertical-align: bottom;" src="/static/images/active_quest_cursor.jpg">
+						{% endif %}
+						</a>
+					</li>
+				{% endfor %}
+			</ul>
+		</nav>
+	</div>
+</section>

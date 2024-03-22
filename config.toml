@@ -1,0 +1,24 @@
+[app]
+prod = true
+host = '0.0.0.0'
+port = 33412
+threaded = true
+debug = false
+
+templates_folder = "front/templates"
+static_folder = "front/static"
+secret_key = "gijaengasodjvnefNSAÙGqsmdigHS"
+
+[app.blueprints.quests_log]
+
+
+[storage.credentials]
+host = '0.0.0.0'
+port = 3306
+user = 
+password = 
+database = 'digiq'
+
+[temod]
+bound_database = 'mysql'
+core_directory = "core"

@@ -1,0 +1,90 @@
+
+@font-face {
+    font-family: "Balgruf";
+    src: url("../fonts/Balgruf-JRye7.ttf");
+}
+
+@font-face {
+    font-family: "BalgrufItalic";
+    src: url("../fonts/BalgrufItalic-GOyem.ttf");
+}
+
+@font-face {
+    font-family: "Dovahkiin";
+    src: url("../fonts/Dovahkiin-rW07.ttf");
+}
+
+@keyframes quest_complete_appear {
+  0% {opacity: 0;}
+  25% {opacity: 0.25;}
+  50% {opacity: 0.5;}
+  75% {opacity: 0.75;}
+  100% {opacity: 1;}
+}
+
+
+body {
+	font-family: Balgruf !important;
+	background: black;
+}
+
+#sidebar {
+	color: white !important;
+}
+
+#sidebar .quest_sidebar_item{
+  cursor: url('../images/cursor.png'), auto;
+}
+
+.skr-style {
+	background: black !important;
+}
+
+.tasks_list {
+	list-style: none;
+	color: white;
+}
+
+.new_tasks_list{
+  list-style: none;
+}
+
+.new_tasks_list > li{
+  margin-top: 1em;
+}
+
+.tasks_list > li {
+	margin-bottom: 10px;
+	background: #121111;
+    padding: 0.5em;
+    border-radius: 10px;
+}
+
+.task_checkbox {
+	cursor: url('../images/cursor.png'), auto;
+}
+
+.skr-button-img {
+  font-family: Balgruf !important;
+}
+
+.skr-button-img > img, .skr-button-img > span {
+  vertical-align: middle;
+}
+
+.skr-img-25 {
+	width: 25px;
+}
+
+.skr-img-40 {
+	width: 40px;
+}
+
+.skr-img-60{
+	width: 60px;
+}
+
+.skr-apparition {
+  animation-name: quest_complete_appear;
+  animation-duration: 2s;
+}

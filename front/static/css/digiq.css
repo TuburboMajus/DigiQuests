@@ -1,0 +1,38 @@
+.down_page_button {
+	background: white; 
+	border-radius: 5px !important; 
+	color: black !important; 
+	width: fit-content;
+}
+
+.clickable_image {
+	cursor: pointer;
+}
+
+.editable_task_item {
+	display: flex;
+	flex-direction: row;
+	align-items: baseline;
+}
+
+.editable_task_full_button {
+	border-radius: 5px;
+	margin-left: 1em;
+	width: 60px;
+	height: 60px;
+	padding: 0;
+}
+
+.editable_task_full_button > img {
+	width: 50px;
+	height: 50px;
+
+}
+
+.editable_task_half_button {
+	border-radius: 5px;
+	margin-left: 1em;
+	width: 60px;
+	height: 25px;
+	padding: 0;
+}

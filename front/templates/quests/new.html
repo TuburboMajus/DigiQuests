@@ -1,0 +1,76 @@
+{% extends quests_templates+"/layout/base.html" %}
+
+{% block content %}
+<!-- Wrapper --> 
+<div id="wrapper">
+
+	<section id="quest_complete_section" class="wrapper skr-style spotlights fullscreen" style="border-left: 1px solid gray; justify-content: center; padding: 2em 1em 2em 1em; display: none;">
+		<h1 align="center">
+			<img src="/static/images/tribals.png" style="vertical-align: middle;">
+			Quest added
+			<img src="/static/images/tribals.png" style="transform: rotate(180deg); vertical-align: middle;">
+		</h1>
+	</section>
+
+	<section id="quest_content_section" class="wrapper skr-style spotlights fullscreen" style="border-left: 1px solid gray; justify-content: space-between; padding: 2em 1em 2em 1em;">
+
+		<div style="position: fixed; right: 10px; top: 10px;" title="quests"><a href="/quests">
+			<button type="submit" class="button submit skr-button-img" style="background: white; border-radius: 50% !important; color: black !important; width: 60px; height: 60px; padding: 0;"><img src="/static/images/home.png" class="skr-img-60">
+		    </button>
+	    </a></div>
+
+	    <section id="three" class="wrapper style1 fade-up">
+			<div class="inner" style="padding-top: 2em;">
+				<h2>Start a new quest</h2>
+				<div class="split style1">
+					<section>
+						<form>
+							<div class="fields">
+								<div class="field half">
+									<label for="name">Quest Name</label>
+									<input type="text" name="name" id="new_quest_title" />
+								</div>
+								<div class="field">
+									<label for="description">Quest Description</label>
+									<textarea name="description" id="new_quest_description" rows="5"></textarea>
+								</div>
+								<div class="field">
+									<label for="message">Periodicity</label>
+									<button id="new_quest_period" data-periodicity="complete_once"  type="button" class="button skr-button-img" style="background: white; border-radius: 5px !important; color: black !important;">
+									Complete Once
+									</button>
+								</div>
+							</div>
+						</form>
+					</section>
+					<section>
+						<h3>Tasks</h3>
+						<ul class="new_tasks_list" id="new_tasks_list">
+							<li id="new_task_li">
+								<button class="button submit skr-button-img" style="background: white; border-radius: 5px !important; color: black !important;" onclick="create_new_task()">
+									<strong style="font-family: Dovahkiin; font-size: 20px; color: black;">T</strong>
+									Add task
+								</button>
+							</li>
+						</ul>
+					</section>
+				</div>
+			</div>
+		</section>
+
+		<div class="row" style="margin-left: 0em !important; justify-content: space-around;">
+			<button id="edit_quest_btn" class="button submit skr-button-img" style="background: white; border-radius: 5px !important; color: black !important;width: fit-content;" onclick="create_new_quest()">
+                <strong style="font-family: Dovahkiin; font-size: 20px; color: black;">Q</strong>&nbsp;Add Quest
+            </button>
+		</div>
+
+		<audio id="level_up" src="/static/audio/level_up.mp3"></audio>
+		<audio id="quest_upgrade" src="/static/audio/quest_upgrade.mp3"></audio>
+		<audio id="quest_downgrade" src="/static/audio/quest_downgrade.mp3"></audio>
+
+	</section>
+
+	{% include quests_templates+"/dialogs/newTask.html" %}
+</div>
+
+{% endblock %}

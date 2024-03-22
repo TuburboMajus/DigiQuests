@@ -1,0 +1,30 @@
+<div class="modal" tabindex="-1" id="newTaskDialog">
+  <div class="modal-dialog">
+    <div class="modal-content" style="background-color: #252a2f;">
+      <div class="modal-header">
+        <h5 class="modal-title">New Task</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="new_task_edited" value=""/>
+        <input type="text" name="description" id="new_task_description" placeholder="Task description..." />
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="button" style="background: #514545; border-radius: 5px !important; color: white !important;width: fit-content;" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="button" style="background: black; border-radius: 5px !important; color: white !important;width: fit-content;" onclick="ntd_addNewTask()" data-bs-dismiss="modal">Add</button>
+      </div>
+    </div>
+  </div>
+</div>
+<script type="text/javascript">
+  function ntd_addNewTask(){
+    let task = {}
+    task['content'] = document.getElementById("new_task_description").value
+
+    let task_element = document.getElementById('new_task_edited')
+    if( task_element.value == ""){ if(task['content'].length > 0) add_new_task(task);}
+    else{
+      update_new_task(task, task_element.value)
+    }
+  }
+</script>

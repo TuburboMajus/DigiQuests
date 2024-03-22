@@ -1,0 +1,440 @@
+var NEW_TASKS_ITERATOR = 0
+
+function show_toast(options){
+	if(options['title'] != undefined) document.getElementById('base_toast_title').innerHTML = options['title'];
+	else document.getElementById('base_toast_title').innerHTML = "";
+
+	if(options['info'] != undefined) document.getElementById('base_toast_info').innerHTML = options['info'];
+	else document.getElementById('base_toast_info').innerHTML = "";
+
+	if(options['image'] != undefined) document.getElementById('base_toast_image').src = options['image'];
+	else document.getElementById('base_toast_image').src = "/static/image/info.png";
+
+	if(options['messages'] == undefined) document.getElementById('base_toast_body').innerHTML = "";
+	else{
+		let toast_body = document.getElementById('base_toast_body')
+		if(options['messages'].length  == 1) toast_body.innerHTML = options['messages'][0]
+		else{
+			toast_body.innerHTML = ""
+			Object.values(options['messages']).forEach( message => {
+				let div = document.createElement('div')
+				div.innerHTML = message
+				toast_body.appendChild(div)
+			})
+		}
+	}
+}
+
+function on_task_checkbox_click(){
+	set_task_complete(this.dataset.task, this.dataset.complete!="true")
+}
+
+function on_sidebar_quest_click(questid){
+	select_quest(questid)
+	event.stopPropagation()
+}
+
+function select_quest(questid){
+	let req = new XMLHttpRequest();
+	req.onload = function(){
+		let data = JSON.parse(this.response)['data']
+		set_selected_quest(data['quest'])
+		reset_quest_ui(data['quest'], data['active'])
+	}
+
+	req.open('GET',`/quest/${questid}?format=json`)
+	req.send()
+}
+
+function set_active_quest(btn){
+	let form = document.createElement('form');
+	form.method="post"
+	form.action=`/quest/${btn.dataset.quest}/active`
+	document.body.appendChild(form)
+	form.submit()
+}
+
+function archive_quest(btn){
+	let form = document.createElement('form');
+	form.method="post"
+	form.action=`/quest/${btn.dataset.quest}/archive`
+	document.body.appendChild(form)
+	form.submit()
+}
+
+function dearchive_quest(btn){
+	let form = document.createElement('form');
+	form.method="post"
+	form.action=`/quest/${btn.dataset.quest}/dearchive`
+	document.body.appendChild(form)
+	form.submit()
+}
+
+function set_task_complete(task, complete){
+	let req = new XMLHttpRequest();
+	req.onload = function(){
+		update_task_ui(JSON.parse(this.response)['data']['task'])
+		update_quest_ui(JSON.parse(this.response)['data']['quest'])
+	}
+
+	req.open('PUT',`/task/${task}`)
+	req.setRequestHeader('Content-Type','application/json')
+	req.send(JSON.stringify(
+		{"complete":complete}
+	))
+}
+
+function set_selected_quest(quest){
+	let sidebar = document.getElementById('sidebar')
+	let selected = Object.values(sidebar.getElementsByClassName('selected')).filter(x => x.classList.contains('quest_sidebar_item'))[0]
+	let new_selection = Object.values(sidebar.getElementsByClassName('unselected')).filter(x => x.dataset.quest == quest['id'])[0]
+
+	if(selected == null || new_selection == null) return;
+	if(selected.dataset.quest == new_selection.dataset.quest) return;
+
+	selected.classList.remove('selected')
+	selected.classList.add('unselected')
+	new_selection.classList.remove('unselected')
+	new_selection.classList.add('selected')
+
+}
+
+function update_task_ui(task){
+
+	let task_li = null;
+	let tasks_li = Object.values(document.getElementsByClassName('tasks_list')[0].getElementsByTagName('li'));
+	for(var i = 0; i < tasks_li.length; i++){
+		if(tasks_li[i].dataset.task == task['id']) 
+			task_li = tasks_li[i];
+	}
+
+	if(task_li == null) return;
+
+	img = task_li.getElementsByTagName('img')[0]
+	new_img = document.createElement('img')
+	new_img.classList.add('skr-img-40')
+	new_img.classList.add('task_checkbox')
+	new_img.dataset.complete = task['complete']
+	new_img.dataset.task = task['id']
+
+	new_img.onclick = on_task_checkbox_click
+
+	let audio = null;
+
+	if(task['complete']){
+		new_img.src = "/static/images/task_complete_icon.png"
+		audio = document.getElementById('quest_upgrade')
+	}
+	else{
+		new_img.src = "/static/images/task_incomplete_icon.png"
+		audio = document.getElementById('quest_downgrade')
+	}
+
+	audio.play()
+	img.replaceWith(new_img)
+
+}
+
+function update_quest_ui(quest){
+
+	let content_section = document.getElementById('quest_content_section')
+	let complete_section = document.getElementById('quest_complete_section')
+
+	if(quest['complete']){
+		document.getElementById('level_up').play()
+		content_section.style.display = "none";
+		complete_section.style.display = "flex";
+		complete_section.classList.add("skr-apparition")
+	}else{
+		let quest_item = Object.values(document.getElementById('incomplete_quests_list').getElementsByClassName('quest_sidebar_item')).filter(
+			x => x.dataset.quest == quest['id']
+		)[0]
+		if(quest_item == undefined) window.location.reload()
+	}
+
+	setTimeout(function(){reset_quest_ui(quest)},6000)
+}
+
+function reset_quest_ui(quest){
+	let content_section = document.getElementById('quest_content_section')
+	let complete_section = document.getElementById('quest_complete_section')
+
+	let active_quest_btn = document.getElementById('set_active_btn')
+	let archive_quest_btn = document.getElementById('archive_btn')
+	let dearchive_quest_btn = document.getElementById('dearchive_btn')
+	if(quest['complete'] === true){
+		active_quest_btn.style.display = "none"
+		active_quest_btn.dataset.quest = ""
+		if(quest['archived'] === true){
+			archive_quest_btn.style.display = "none"
+			archive_quest_btn.dataset.quest = ""
+			dearchive_quest_btn.style.display = "block"
+			dearchive_quest_btn.dataset.quest = quest['id']
+		}else{
+			archive_quest_btn.style.display = "block"
+			archive_quest_btn.dataset.quest = quest['id']
+			dearchive_quest_btn.style.display = "none"
+			dearchive_quest_btn.dataset.quest = ""
+		}
+	}else{
+		archive_quest_btn.style.display = "none"
+		archive_quest_btn.dataset.quest = ""
+		dearchive_quest_btn.style.display = "none"
+		dearchive_quest_btn.dataset.quest = ""
+		if(quest['active'] === true){
+			active_quest_btn.style.display = "none"
+			active_quest_btn.dataset.quest = ""
+		}else if(quest['active'] === false){
+			active_quest_btn.style.display = "block"
+			active_quest_btn.dataset.quest = quest['id']
+		}
+	}
+
+	if(quest['key']['resource_key'].includes('w')){
+		edit_quest_btn.style.display = "block"
+		edit_quest_btn.onclick = function(){ window.location.href = `/quest/${quest['id']}` }
+	}else{
+		edit_quest_btn.style.display = "none"
+		edit_quest_btn.onclick = function(){}
+	}
+
+	if(quest['title'] != undefined) document.getElementById('selected_quest_title').innerHTML = quest['title']
+	if(quest['description'] != undefined) document.getElementById('selected_quest_description').innerHTML = quest['description']
+
+	if(quest['tasks'] != undefined){
+		let tasks_list = document.getElementById('selected_quest_tasks')
+		tasks_list.innerHTML = ""
+		Object.values(quest['tasks']).forEach(task => {
+			let li = document.createElement('li')
+			li.classList.add('skr-button-img')
+			li.dataset.task = task['id']
+
+			if(task['complete']){
+				li.innerHTML = `<img src="/static/images/task_complete_icon.png" class="skr-img-40 task_checkbox" data-complete="true" data-task="${task['id']}">`
+			}else{
+				li.innerHTML = `<img src="/static/images/task_incomplete_icon.png" class="skr-img-40 task_checkbox" data-complete="false" data-task="${task['id']}">`
+			}
+
+			li.innerHTML += task['content']
+			tasks_list.appendChild(li)
+
+			if(quest['archived'] !== true){
+				li.getElementsByTagName('img')[0].onclick = on_task_checkbox_click
+			}
+		})
+	}
+
+	content_section.style.display = "flex";
+	complete_section.style.display = "none";
+}
+
+function add_new_task(task){
+	let tasks_list = document.getElementById('new_tasks_list')
+	let task_item = document.createElement('li')
+	let task_name = document.createElement('strong')
+	let edit_button = document.createElement('button')
+	let edit_button_img = document.createElement('img')
+	let delete_button = document.createElement('button')
+	let delete_button_img = document.createElement('img')
+	let up_button = document.createElement('button')
+	let up_button_img = document.createElement('img')
+	let down_button = document.createElement('button')
+	let down_button_img = document.createElement('img')
+	let dir_buttons_div = document.createElement('div')
+
+	task_item.classList.add('editable_task_item')
+	if(task['id'] != undefined) task_item.dataset.task = task['id']
+
+	task_name.innerHTML = task['content']
+	task_name.classList.add('task_name')
+
+	edit_button_img.src = "/static/images/cog.png"
+	edit_button.classList.add("skr-button-img")
+	edit_button.classList.add("editable_task_full_button")
+
+	delete_button_img.src = "/static/images/trash.png"
+	delete_button.classList.add("skr-button-img")
+	delete_button.classList.add("editable_task_full_button")
+
+	up_button_img.src = "/static/images/up_arrow.png"
+	up_button_img.classList.add("editable_task_half_button")
+	up_button_img.classList.add("clickable_image")
+
+	down_button_img.src = "/static/images/down_arrow.png"
+	down_button_img.classList.add("editable_task_half_button")
+	down_button_img.classList.add("clickable_image")
+
+	delete_button.onclick = delete_new_task
+	edit_button.onclick = edit_new_task_from_list
+	up_button_img.onclick = move_task_up
+	down_button_img.onclick = move_task_down
+
+	delete_button.appendChild(delete_button_img)
+	edit_button.appendChild(edit_button_img)
+
+	dir_buttons_div.style.alignSelf = "flex-start"
+	dir_buttons_div.appendChild(up_button_img);
+	dir_buttons_div.appendChild(down_button_img);
+
+	task_item.id = "new_task_item_"+NEW_TASKS_ITERATOR
+	NEW_TASKS_ITERATOR += 1
+ 
+	task_item.appendChild(task_name)
+	task_item.appendChild(edit_button)
+	task_item.appendChild(delete_button)
+	task_item.appendChild(dir_buttons_div)
+	tasks_list.insertBefore(task_item, new_task_li)
+}
+
+function update_new_task(task, task_element_id){
+	let task_dom = document.getElementById(task_element_id)
+	if(task_dom == null) return;
+
+	task_dom.getElementsByClassName('task_name')[0].innerHTML = task['content']
+}
+
+
+function edit_new_task_from_list(btn){
+	let task = {}
+	if( btn == undefined || btn.tagName == undefined) btn = this;
+	task['content'] = btn.parentNode.getElementsByClassName('task_name')[0].innerHTML
+	edit_new_task(task, btn.parentNode.id)
+}
+
+function create_new_task(){
+	document.getElementById('new_task_description').value = ""
+	document.getElementById('new_task_edited').value = ""
+	$('#newTaskDialog').modal('show')
+}
+
+function edit_new_task(task, task_element_id){
+	document.getElementById('new_task_description').value = task['content']
+	document.getElementById('new_task_edited').value = task_element_id
+	$('#newTaskDialog').modal('show')
+}
+
+function delete_new_task(btn){
+	if( btn == undefined || btn.tagName == undefined) btn = this;
+	btn.parentNode.remove()
+}
+
+function move_task_up(btn){
+	if( btn == undefined || btn.tagName == undefined) btn = this;
+	let task_item = this.parentNode.parentNode
+	let tasks_list = document.getElementById("new_tasks_list")
+	let task_order = null;
+	let tasks = Object.values(tasks_list.getElementsByTagName('li')).filter( x => x.id != "new_task_li" )
+	for(var i = 0; i < tasks.length; i++){
+		if(tasks[i].id == task_item.id) task_order = i;
+	}
+
+	console.log(task_item)
+	console.log(task_order)
+	if(task_order == null || task_order == 0) return;
+	tasks_list.removeChild(task_item)
+	tasks_list.insertBefore(task_item,tasks[task_order-1])
+}
+
+function move_task_down(btn){
+	if( btn == undefined || btn.tagName == undefined) btn = this;
+	let task_item = this.parentNode.parentNode
+	let tasks_list = document.getElementById("new_tasks_list")
+	let task_order = null;
+	let tasks = Object.values(tasks_list.getElementsByTagName('li')).filter( x => x.id != "new_task_li" )
+	for(var i = 0; i < tasks.length; i++){
+		if(tasks[i].id == task_item.id) task_order = i;
+	}
+
+	console.log(task_item)
+	console.log(task_order)
+	if(task_order == null || task_order == tasks.length-1) return;
+	tasks_list.removeChild(task_item)
+	if(task_order == tasks.length-2) tasks_list.insertBefore(task_item,document.getElementById('new_task_li'))
+	else tasks_list.insertBefore(task_item,tasks[task_order+2])
+}
+
+
+function validate_quest(quest){
+
+	if(quest['title'].length == 0) return ["Quest title can't be left empty"];
+
+	return [];
+}
+
+
+function create_new_quest(){
+	let quest = {}
+	quest['title'] = document.getElementById('new_quest_title').value
+	quest['description'] = document.getElementById('new_quest_description').value
+	quest['periodicity'] = {"type": document.getElementById('new_quest_period').dataset.periodicity}
+	quest['tasks'] = Object.values(
+		document.getElementById("new_tasks_list").getElementsByTagName('li')
+	).filter( 
+		x => x.id != "new_task_li"
+	).map( 
+		y => { return {"content":y.getElementsByClassName('task_name')[0].innerHTML};}
+	)
+
+	console.log(quest)
+
+	errors = validate_quest(quest)
+	if(errors.length == 0){
+		var req = new XMLHttpRequest()
+		req.onload = function(){
+			js = JSON.parse(this.response)
+			window.location.href = `/quests?quest=${js['data']['quest']['id']}`
+		}
+
+		req.open('POST',"/quest")
+		req.setRequestHeader('Content-Type',"application/json")
+		req.send(JSON.stringify(quest))
+	}else{
+		show_toast({
+			"messages":errors,
+			"title": "Error",
+			"info": "",
+			"image": "/static/images/error.png",
+		})
+	}
+}
+
+function edit_quest(questid){
+
+	let quest = {}
+	quest['title'] = document.getElementById('new_quest_title').value
+	quest['description'] = document.getElementById('new_quest_description').value
+	quest['periodicity'] = {"type": document.getElementById('new_quest_period').dataset.periodicity}
+	quest['tasks'] = Object.values(
+		document.getElementById("new_tasks_list").getElementsByTagName('li')
+	).filter( 
+		x => x.id != "new_task_li"
+	).map( 
+		y => { 
+			task = {"content":y.getElementsByClassName('task_name')[0].innerHTML};
+			if(y.dataset.task != undefined) task['id'] = y.dataset.task
+			return task;
+		}
+	)
+
+	errors = validate_quest(quest)
+	if(errors.length == 0){
+		var req = new XMLHttpRequest()
+		req.onload = function(){
+			js = JSON.parse(this.response)
+			window.location.href = `/quests?quest=${js['data']['quest']['id']}`
+		}
+
+		req.open('PUT',`/quest/${questid}`)
+		req.setRequestHeader('Content-Type',"application/json")
+		req.send(JSON.stringify(quest))
+	}else{
+		show_toast({
+			"messages":errors,
+			"title": "Error",
+			"info": "",
+			"image": "/static/images/error.png",
+		})
+	}
+}
+
+$('.task_checkbox').on('click',on_task_checkbox_click)

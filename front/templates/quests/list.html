@@ -1,0 +1,94 @@
+{% extends quests_templates+"/layout/base.html" %}
+
+{% block content %}
+{% include quests_templates+"/sidebar.html" %}
+
+<!-- Wrapper --> 
+<div id="wrapper">
+
+	<section id="quest_complete_section" class="wrapper skr-style spotlights fullscreen" style="border-left: 1px solid gray; justify-content: center; padding: 2em 1em 2em 1em; display: none;">
+		<h1 align="center">
+			<img src="/static/images/tribals.png" style="vertical-align: middle;">
+			Quest complete
+			<img src="/static/images/tribals.png" style="transform: rotate(180deg); vertical-align: middle;">
+		</h1>
+	</section>
+
+	<section id="quest_content_section" class="wrapper skr-style spotlights fullscreen" style="border-left: 1px solid gray; justify-content: space-between; padding: 2em 1em 2em 1em;">
+
+		<div style="position: fixed; right: 75px; top: 10px;" title="new quest"><a href="/quest">
+			<button type="submit" class="button submit skr-button-img" style="background: white; border-radius: 50% !important; color: black !important; width: 60px; height: 60px; padding: 0;"><img src="/static/images/skyrim.png" class="skr-img-60">
+		    </button>
+	    </a></div>
+
+	    {% if is_archive %}
+		<div style="position: fixed; right: 10px; top: 10px;" title="quests"><a href="/quests">
+			<button type="submit" class="button submit skr-button-img" style="background: white; border-radius: 50% !important; color: black !important; width: 60px; height: 60px; padding: 0;"><img src="/static/images/home.png" class="skr-img-60">
+		    </button>
+	    </a></div>
+	    {% else %}
+		<div style="position: fixed; right: 10px; top: 10px;" title="archive"><a href="/quests/archived">
+			<button type="submit" class="button submit skr-button-img" style="background: white; border-radius: 50% !important; color: black !important; width: 60px; height: 60px; padding: 0;"><img src="/static/images/archive.png" class="skr-img-60">
+		    </button>
+	    </a></div>
+	    {% endif %}
+
+		{% if selected_quest is not none %}
+		<section>
+			<div class="content" style="padding-top: 0em !important; justify-content: flex-start !important;">
+				<div class="inner">
+					<h2 id="selected_quest_title">{{selected_quest['title']}}</h2>
+					<p id="selected_quest_description">{{selected_quest['description']}}</p>
+					<ul class="tasks_list" id="selected_quest_tasks">
+					{% for task in selected_quest_tasks %}
+						<li class="skr-button-img" data-task="{{task['id']}}">
+							{% if task['complete'] %}
+								<img src="/static/images/task_complete_icon.png" class="skr-img-40 task_checkbox" data-complete="{{task['complete'].__str__().lower()}}" data-task="{{task['id']}}">
+							{%else%}
+								<img src="/static/images/task_incomplete_icon.png" class="skr-img-40 task_checkbox" data-complete="{{task['complete'].__str__().lower()}}" data-task="{{task['id']}}">
+							{% endif %}
+							{{task['content']}}
+						</li>
+					{% endfor %}
+					</ul>
+				</div>
+			</div>
+		</section>
+		{% else %}
+		<section>
+			<div class="content" style="padding-top: 0em !important; justify-content: flex-start !important;">
+				<div class="inner">
+					<h2 id="selected_quest_title"></h2>
+					<p id="selected_quest_description"></p>
+					<ul class="tasks_list" id="selected_quest_tasks">
+					</ul>
+				</div>
+			</div>
+		</section>
+		{% endif %}
+
+		<div class="row" style="margin-left: 0em !important; justify-content: space-between;">
+
+			<button id="edit_quest_btn" class="button submit skr-button-img down_page_button" {% if selected_quest is none and 'w' in selected_quest_key['resource_key'] %}style="display: none;"{% endif %} onclick="window.location.href='/quest/{{selected_quest['id']}}'">
+                <strong style="font-family: Dovahkiin; font-size: 20px; color: black;">E</strong>&nbsp;Edit Quest
+            </button>
+
+			<button id="set_active_btn" class="button submit skr-button-img down_page_button" {% if selected_quest is none or selected_quest['complete'] or (active_quest is not none and selected_quest['id'] == active_quest['id']) %}style="display: None;"{%endif%} onclick="set_active_quest(this)">
+                <strong style="font-family: Dovahkiin; font-size: 20px; color: black;">A</strong>&nbsp;Set active quest
+            </button>
+
+			<button id="archive_btn" class="button submit skr-button-img down_page_button" {% if selected_quest is none or not selected_quest['complete'] or selected_quest['archived'] %}style="display: none;"{%endif%} onclick="archive_quest(this)">
+                <strong style="font-family: Dovahkiin; font-size: 20px; color: black;">A</strong>&nbsp;Archive quest
+            </button>
+
+			<button id="dearchive_btn" class="button submit skr-button-img down_page_button" {% if selected_quest is none or not selected_quest['archived'] %}style="display: none;"{%endif%} onclick="dearchive_quest(this)">
+                <strong style="font-family: Dovahkiin; font-size: 20px; color: black;">A</strong>&nbsp;De-archive quest
+            </button>
+		</div>
+		<audio id="level_up" src="/static/audio/level_up.mp3"></audio>
+		<audio id="quest_upgrade" src="/static/audio/quest_upgrade.mp3"></audio>
+		<audio id="quest_downgrade" src="/static/audio/quest_downgrade.mp3"></audio>
+	</section>
+</div>
+
+{% endblock %}
