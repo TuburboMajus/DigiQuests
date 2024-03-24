@@ -25,5 +25,4 @@ def launch_update(credentials):
 	cmd = create_mysql_cmd(credentials)
 
 	p = Popen(cmd, stdout=PIPE, stdin=PIPE, stderr=PIPE, text=True)
-	with open(schema_path) as file:
-		stdout_data = p.communicate(input=MYSQL_CMD)[0]
+	stdout_data = p.communicate(input=MYSQL_CMD)[0]
