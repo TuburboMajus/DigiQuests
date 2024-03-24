@@ -9,7 +9,8 @@ from copy import deepcopy
 class Quest(Entity):
 	ENTITY_NAME = "quest"
 	ATTRIBUTES = [
-		{"name":"id","type":UUID4Attribute,"required":True,"is_id":True,"non_empty":True,"is_nullable":False},
+		{"name":"id","type":UUID4Attribute,"required":True,"is_id":True,"is_nullable":False},
+		{"name":"owner","type":UUID4Attribute,"required":True,"is_nullable":False},
 		{"name":"title","type":StringAttribute,"required":True,"non_empty":True,"max_length":100,"is_nullable":False},
 		{"name":"description","type":StringAttribute,"max_length":500},
 		{"name":"complete","type":BooleanAttribute, "is_nullable": False, "default_value": False},

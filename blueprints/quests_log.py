@@ -21,6 +21,7 @@ def setup(configuration):
 	}
 	return quests_log_blueprint
 
+
 def get_configuration(config):
 	try:
 		return quests_log_blueprint.configuration.get(config)
@@ -29,6 +30,7 @@ def get_configuration(config):
 			setup({})
 			return get_configuration(config)
 		raise
+
 
 quests_log_blueprint = Blueprint('quests_log', __name__)
 quests_log_blueprint.setup = setup
@@ -56,18 +58,16 @@ def getQuests():
 		))
 
 	active_quest = ActiveQuest.storage.get(user=current_user['id'])
-	selected_quest = None
+	selected_quest_id = None; default_quest = None
 	if active_quest is not None:
-		selected_quest = request.args.get("quest",active_quest['quest'])
-		if selected_quest != active_quest['quest'] and selected_quest in [key['resource'] for key in keys]:
-			selected_quest = Quest.storage.get(id=selected_quest)
-		else:
-			selected_quest = Quest.storage.get(id=active_quest['quest'])
+		default_quest = active_quest['quest']
+	selected_quest_id = request.args.get("quest",default_quest)
 
-	selected_quest_tasks = []; selected_quest_key = None
-	if selected_quest is not None:
-		selected_quest_tasks = sorted(Task.storage.list(quest=selected_quest['id']),key=lambda t:t['task_order'])
-		selected_quest_key = [key for key in keys if key['resource'] == selected_quest['id']][0]
+	selected_quest = None; selected_quest_tasks = []; selected_quest_key = None
+	if selected_quest_id is not None:
+		selected_quest = Quest.storage.get(id=selected_quest_id)
+		selected_quest_tasks = sorted(Task.storage.list(quest=selected_quest_id),key=lambda t:t['task_order'])
+		selected_quest_key = [key for key in keys if key['resource'] == selected_quest_id][0]
 
 	templates_folder = quests_log_blueprint.configuration["templates_folder"]
 	return render_template(
@@ -91,22 +91,29 @@ def getArchivedQuests():
 		resource_type="quest"
 	))
 
-	complete_quests = list(Quest.storage.list(
+	archived_quests = list(Quest.storage.list(
 		In("id",*[UUID4Attribute("id",value=key['resource']) for key in keys]),
 		archived=True
 	))
+
+	selected_quest = None; selected_quest_tasks = []; selected_quest_key = None
+	if len(archived_quests) > 0:
+		selected_quest = archived_quests[0]
+		selected_quest_tasks = sorted(Task.storage.list(quest=selected_quest['id']),key=lambda t:t['task_order'])
+		selected_quest_key = [key for key in keys if key['resource'] == selected_quest['id']][0]
 
 	templates_folder = quests_log_blueprint.configuration["templates_folder"]
 	return render_template(
 		str(Path(templates_folder).joinpath('list.html')),
 		active_quest=None,
 		quests_templates=templates_folder,
-		active_quest_tasks=[],
+		selected_quest=selected_quest,
+		selected_quest_tasks=selected_quest_tasks,
+		selected_quest_key=selected_quest_key,
 		incomplete_quests=[],
-		complete_quests=complete_quests,
+		complete_quests=archived_quests,
 		is_archive=True
 	)
-
 
 
 @quests_log_blueprint.route("/quest",methods=["GET"])
@@ -119,6 +126,7 @@ def newQuest():
 		quests_templates=templates_folder
 	)
 
+
 @quests_log_blueprint.route("/quest",methods=["POST"])
 @login_required
 def createQuest():
@@ -127,6 +135,7 @@ def createQuest():
 
 	quest = Quest(
 		id=Quest.storage.generate_value('id'),
+		owner=current_user['id'],
 		title=data['title'],
 		description=data['description'],
 		complete=False,
@@ -139,7 +148,7 @@ def createQuest():
 	for i,task in enumerate(data['tasks']):
 		tasks.append(Task(id=Task.storage.generate_value('id'),quest=quest['id'],task_order=i,content=task['content'],complete=False))
 
-	key = ResourceKey(id=ResourceKey.storage.generate_value('id'),resource=quest['id'],resource_type="quest",user=current_user['id'],resource_key="rwx")
+	key = ResourceKey(id=ResourceKey.storage.generate_value('id'),resource=quest['id'],resource_type="quest",user=current_user['id'],resource_key="drwx")
 
 	Quest.storage.create(quest)
 	ResourceKey.storage.create(key)
@@ -236,6 +245,28 @@ def editQuest(quest_id):
 	return {"data":{"quest":quest}}
 
 
+@quests_log_blueprint.route("/quest/<string:quest_id>",methods=["DELETE"])
+@login_required
+def deleteQuest(quest_id):
+
+	quest = Quest.storage.get(id=quest_id).takeSnapshot()
+	if quest is None:
+		return abort(404)
+	key = ResourceKey.storage.get(resource=quest['id'], resource_type="quest", user=current_user['idU'])
+	if key is None:
+		key = ResourceKey.storage.get(resource=quest['id'], resource_type="quest", user=None)
+
+	if key is None or not( 'd' in key['resource_key'] ):
+		return abort(403)
+
+	ResourceKey.storage.delete(resource=quest['id'], resource_type="quest", many=True)
+	Task.storage.delete(quest=quest['id'],many=True)
+	Quest.storage.delete(quest=quest['id'])
+
+	quest = quest.to_dict()
+	return {"data":{"quest":quest}}
+
+
 @quests_log_blueprint.route("/quest/<string:quest_id>/active",methods=["POST"])
 @login_required
 def setActiveQuest(quest_id):
@@ -302,8 +333,6 @@ def setQuestDearchived(quest_id):
 	Quest.storage.updateOnSnapshot(quest)
 
 	return redirect("/quests")
-
-
 
 
 @quests_log_blueprint.route("/task/<string:task_id>",methods=["PUT"])

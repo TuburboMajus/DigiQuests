@@ -16,6 +16,11 @@
 
 	<section id="quest_content_section" class="wrapper skr-style spotlights fullscreen" style="border-left: 1px solid gray; justify-content: space-between; padding: 2em 1em 2em 1em;">
 
+		<div style="position: fixed; right: 140px; top: 10px;" title="profile"><a href="/profile">
+			<button type="submit" class="button submit skr-button-img" style="background: white; border-radius: 50% !important; color: black !important; width: 60px; height: 60px; padding: 0;"><img src="/static/images/profile.png" class="skr-img-60">
+		    </button>
+	    </a></div>
+
 		<div style="position: fixed; right: 75px; top: 10px;" title="new quest"><a href="/quest">
 			<button type="submit" class="button submit skr-button-img" style="background: white; border-radius: 50% !important; color: black !important; width: 60px; height: 60px; padding: 0;"><img src="/static/images/skyrim.png" class="skr-img-60">
 		    </button>
@@ -73,7 +78,11 @@
                 <strong style="font-family: Dovahkiin; font-size: 20px; color: black;">E</strong>&nbsp;Edit Quest
             </button>
 
-			<button id="set_active_btn" class="button submit skr-button-img down_page_button" {% if selected_quest is none or selected_quest['complete'] or active_quest is none or selected_quest['id'] == active_quest['id'] %}style="display: None;"{%endif%} onclick="set_active_quest(this)">
+			<button id="delete_quest_btn" class="button submit skr-button-img down_page_button" {% if selected_quest is none or not ('d' in selected_quest_key['resource_key']) %}style="display: none;"{% endif %} onclick="delete_quest('{{selected_quest['id']}}')">
+                <strong style="font-family: Dovahkiin; font-size: 20px; color: black;">E</strong>&nbsp;Delete Quest
+            </button>
+
+			<button id="set_active_btn" class="button submit skr-button-img down_page_button" {% if selected_quest is none or selected_quest['complete'] or active_quest is none or selected_quest['id'] == active_quest['quest'] %}style="display: None;"{%endif%} onclick="set_active_quest(this)">
                 <strong style="font-family: Dovahkiin; font-size: 20px; color: black;">A</strong>&nbsp;Set active quest
             </button>
 

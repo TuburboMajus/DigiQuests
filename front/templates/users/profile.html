@@ -1,0 +1,104 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <title>DigiQuests</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+  <link rel="icon" type="image/x-icon" href="/static/images/favicon.ico">
+  <link rel="stylesheet" href="/static/css/bootstrap.min.css" />
+  <link rel="stylesheet" href="/static/css/main.css" />
+  <link rel="stylesheet" href="/static/css/skyrim.css" />
+  <link rel="stylesheet" href="/static/css/digiq.css" />
+  <noscript><link rel="stylesheet" href="/static/css/noscript.css" /></noscript>
+</head>
+<body class="is-preload">
+
+  {% include "users/sidebar.html" %}
+
+  <div id="wrapper">
+
+    <section id="quest_complete_section" class="wrapper skr-style spotlights fullscreen" style="border-left: 1px solid gray; justify-content: center; padding: 2em 1em 2em 1em; display: none;">
+      <h1 align="center">
+        <img src="/static/images/tribals.png" style="vertical-align: middle;">
+        Quest complete
+        <img src="/static/images/tribals.png" style="transform: rotate(180deg); vertical-align: middle;">
+      </h1>
+    </section>
+
+    <section id="quest_content_section" class="wrapper skr-style spotlights fullscreen" style="border-left: 1px solid gray; justify-content: space-between; padding: 2em 1em 2em 1em;">
+
+      <div style="position: fixed; right: 75px; top: 10px;" title="new quest"><a href="/quest">
+        <button type="submit" class="button submit skr-button-img" style="background: white; border-radius: 50% !important; color: black !important; width: 60px; height: 60px; padding: 0;"><img src="/static/images/skyrim.png" class="skr-img-60">
+          </button>
+        </a>
+      </div>
+
+      <div style="position: fixed; right: 10px; top: 10px;" title="quests"><a href="/quests">
+        <button type="submit" class="button submit skr-button-img" style="background: white; border-radius: 50% !important; color: black !important; width: 60px; height: 60px; padding: 0;"><img src="/static/images/home.png" class="skr-img-60">
+          </button>
+        </a>
+      </div>
+
+      <div class="content" style="padding-top: 0em !important; justify-content: flex-start !important;">
+        <div class="inner">
+          <h2>{{account['username']}}</h2>
+          <div class="split style1" style="margin-top: 2em;">
+            <section>
+              <hr>
+              <input type="hidden" id="accountid" value="{{account['id']}}"/>
+              <form method="post">
+                <div class="fields">
+                  <div class="field half">
+                    <label for="username">New Password</label>
+                    <input type="password" name="password" id="password"/>
+                  </div>
+                  <div class="field half">
+                    <label for="password">Confirm Password</label>
+                    <input type="password" name="cpassword" id="cpassword" />
+                  </div>
+                </div>
+              </form>
+            </section>
+          </div>
+        </div>
+      </div>
+
+      <div class="row"Prendre un  style="margin-left: 0em !important; justify-content: space-between;">
+
+        <button id="update_user_btn" class="button submit skr-button-img down_page_button" onclick="on_confirm_updates()">
+          <strong style="font-family: Dovahkiin; font-size: 20px; color: black;">E</strong>&nbsp;Confirm changes
+        </button>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11;">
+    <div class="toast hide" id="base_toast" role="alert" aria-live="assertive" aria-atomic="true">
+      <div class="toast-header">
+        <img id="base_toast_image" src="/static/images/info.png" class="rounded me-2" alt="..." style="width: 20px;">
+        <strong class="me-auto" id="base_toast_title" style="color: black !important;"></strong>
+        <small id="base_toast_info"></small>
+        <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+      </div>
+      <div class="toast-body" id="base_toast_body"  style="color: black !important;">
+      </div>
+    </div>
+  </div>
+
+  {% include "users/dialogs/getPassword.html" %}
+
+  <script src="/static/js/jquery.min.js"></script>
+  <script src="/static/js/jquery.scrollex.min.js"></script>
+  <script src="/static/js/jquery.scrolly.min.js"></script>
+  <script src="/static/js/bootstrap.bundle.min.js"></script>
+  <script src="/static/js/browser.min.js"></script>
+  <script src="/static/js/breakpoints.min.js"></script>
+  <script src="/static/js/util.js"></script>
+  <script src="/static/js/main.js"></script>
+  <script src="/static/js/common.js"></script>
+  <script src="/static/js/accounts.js"></script>
+
+</body>
+</html>

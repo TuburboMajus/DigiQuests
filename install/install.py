@@ -4,13 +4,15 @@ from pathlib import Path
 from uuid import uuid4 
 
 import mysql.connector
+import pprinter
+import toml
 import sys
 import re
 import os
 
 
-DATABASE_NAME = "digiq"
-APP_VERSION = "0.0.0"
+
+APP_VERSION = "1.0.0"
 
 
 def print_decorated_title(title):
@@ -20,6 +22,7 @@ def print_decorated_title(title):
     print("*  " + decorate_text(title) + " *")
     print("*" * 4 + "-" * (len(title) + 2) + "*" * 4)
     print(decoration)
+
 
 def decorate_text(text):
     decorated_text = ''
@@ -61,15 +64,26 @@ def get_mysql_credentials():
 		except:
 			print(f"Invalid port")
 
-	user = input("Enter you mysql user: ")
-	password = input("Enter you mysql password:")
+	user = input("Enter your mysql user: ")
+	password = input("Enter your mysql password:")
+	database = input("Enter your mysql database name:")
 
 	if user == "":
 		user = None
 	if password == "":
 		password == None
 
-	return {"host":host,"port":port, "user":user, "password":password, "database": DATABASE_NAME}
+	print("\n\n"+"*"*20)
+	print("Database: ")
+	print(f"ip = {host}:{port}")
+	print(f"user = {user}")
+	print(f"password = {password}")
+	print(f"database = {database}")
+	rspn = input("confirm ? (y/*)").lower()
+	if rspn == "y":
+		return {"host":host,"port":port, "user":user, "password":password, "database": database}
+	print()
+	return get_mysql_credentials()
 
 
 def search_existing_database(credentials):
@@ -93,7 +107,7 @@ def search_existing_database(credentials):
 
 
 def confirm_database_overwrite():
-	print_decorated_title("! DANGER")
+	print(); print_decorated_title("! DANGER"); print()
 	print("The specified database already exists and is not empty. This installation script will erase all the database content and overwrite it with a clean one.")
 	rpsn = input("Continue the installation (y/*) ?").lower()
 	return rpsn == "y"
@@ -111,6 +125,7 @@ def create_mysql_cmd(credentials):
 	if credentials['password']:
 		cmd.extend([f"-p{credentials['password']}"])
 	return cmd
+
 
 def install_preset_objects(credentials):	
 	digiquest = DigiQuest(version=APP_VERSION)
@@ -130,19 +145,25 @@ def install_preset_objects(credentials):
 
 
 if __name__ == "__main__":
-	import pprinter
+
+	print("\n"); width = pprinter.print_pattern("DigiQuest"); print(); print("#"*width); print()
 
 	cpath = Path(os.path.realpath(__file__))
 	schema_path = os.path.join(cpath.parent, "storages", "dbscheme.sql")
+	config_path = os.path.join(cpath.parent.parent,"config.toml")
+
 	if not os.path.isfile(schema_path):
 		print("DB schema file not found at",schema_path)
+		sys.exit()
+
+	if not os.path.isfile(config_path):
+		print("Config file not found at",config_path)
 		sys.exit()
 
 	try:
 		from core.entity import *
 	except:
-		core_path = os.path.join(cpath.parent.parent)
-		sys.path.insert(0,core_path)
+		sys.path.insert(0,str(cpath.parent.parent))
 		from core.entity import *	
 
 	credentials = get_mysql_credentials()
@@ -155,9 +176,14 @@ if __name__ == "__main__":
 
 	cmd = create_mysql_cmd(credentials)
 
-	print("Executing cmd:", cmd)
 	p = Popen(cmd, stdout=PIPE, stdin=PIPE, stderr=PIPE, text=True)
 	with open(schema_path) as file:
-		stdout_data = p.communicate(input=file.read())[0]
+		stdout_data = p.communicate(input=file.read().replace("$database",credentials['database']))[0]
+
+	with open(config_path) as file:
+		config = toml.loads(file.read())
+	config['storage']['credentials'].update(credentials)
+	with open(config_path,'w') as file:
+		file.write(toml.dumps(config))
 
 	install_preset_objects(credentials)

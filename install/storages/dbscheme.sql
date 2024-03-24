@@ -2,9 +2,9 @@
  *  INITIALIZE
 \******************************/ 
 
-drop database IF EXISTS digiq;
-create database digiq;
-use digiq;
+drop database IF EXISTS $database;
+create database $database;
+use $database;
 
 /******************************\
  * TABLES
@@ -13,7 +13,7 @@ use digiq;
 /***** APP *****/
 
 create table digiQuest(
-    version varchar primary key not null
+    version varchar(20) primary key not null
 );
 
 /***** USER *****/

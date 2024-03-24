@@ -639,6 +639,15 @@ def get_pattern(letter):
             "   ##  ",
             "       "
         ],
+        ' ': [
+            "       ",
+            "       ",
+            "       ",
+            "       ",
+            "       ",
+            "       ",
+            "       "
+        ],
     }
     return patterns.get(letter, [""] * 7)
 
@@ -651,10 +660,3 @@ def print_pattern(word):
         if len(line) > max:
             max = len(line)
     return max
-
-
-print("\n")
-width = print_pattern("DigiQuest")
-print()
-print("#"*width)
-print()

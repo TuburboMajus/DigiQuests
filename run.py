@@ -45,8 +45,8 @@ init_context()
 
 
 # ** Section ** Blueprint
-app.register_blueprint(quests_log_blueprint.setup(config['app']['blueprints']['quests_log']))
-
+app.register_blueprint(quests_log_blueprint.setup(config['app'].get('blueprints',{}).get('quests_log',{})))
+app.register_blueprint(users_blueprint.setup(config['app'].get('blueprints',{}).get("users",{})))
 # ** EndSection ** Blueprint
 
 
@@ -68,6 +68,8 @@ def home():
 def login():
 	if request.method == "POST":
 		user = AUTHENTICATOR.search_user(request.form.get("username"),request.form.get("password"))
+		print(request.form)
+		print(user)
 		if user is not None:
 			AUTHENTICATOR.login_user(user)
 			return redirect("/quests")
@@ -76,7 +78,7 @@ def login():
 @app.route('/logout',methods=['GET'])
 @login_required
 def logout():
-	Authenticator.logout_user()
+	AUTHENTICATOR.logout_user(current_user)
 	return redirect('/login')
 # ** EndSection ** AppMainRoutes
 

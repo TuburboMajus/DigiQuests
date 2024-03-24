@@ -20,6 +20,8 @@ class AccountFile(Join):
 	EXO_SKELETON = {
 		"is_authenticated":"userAccount.is_authenticated",
 		"is_active":"userAccount.is_active",
+		"username":"user.username",
+		"mdp":"user.mdp",
 		"id":"userAccount.id",
 	}
 # ** EndSection ** Join_AccountFile

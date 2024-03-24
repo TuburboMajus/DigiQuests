@@ -10,7 +10,7 @@ class User(Entity):
 	ENTITY_NAME = "user"
 	ATTRIBUTES = [
 		{"name":"id","type":UUID4Attribute,"required":True,"is_id":True,"non_empty":True,"is_nullable":False},
-		{"name":"username","type":UTF8BASE64Attribute,"required":True,"non_empty":True,"is_nullable":False},
+		{"name":"username","type":UTF8BASE64Attribute,"required":True,"non_empty":True,"force_lower_case":True,"is_nullable":False},
 		{"name":"mdp","type":UTF8BASE64Attribute,"required":True,"non_empty":True,"is_nullable":False},
 		{"name":"token","type":UUID4Attribute,"required":False,"is_nullable":True},
 		{"name":"expiration_date","type":DateTimeAttribute,"required":False,"is_nullable":True}

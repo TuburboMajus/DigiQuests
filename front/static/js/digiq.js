@@ -1,30 +1,5 @@
 var NEW_TASKS_ITERATOR = 0
 
-function show_toast(options){
-	if(options['title'] != undefined) document.getElementById('base_toast_title').innerHTML = options['title'];
-	else document.getElementById('base_toast_title').innerHTML = "";
-
-	if(options['info'] != undefined) document.getElementById('base_toast_info').innerHTML = options['info'];
-	else document.getElementById('base_toast_info').innerHTML = "";
-
-	if(options['image'] != undefined) document.getElementById('base_toast_image').src = options['image'];
-	else document.getElementById('base_toast_image').src = "/static/image/info.png";
-
-	if(options['messages'] == undefined) document.getElementById('base_toast_body').innerHTML = "";
-	else{
-		let toast_body = document.getElementById('base_toast_body')
-		if(options['messages'].length  == 1) toast_body.innerHTML = options['messages'][0]
-		else{
-			toast_body.innerHTML = ""
-			Object.values(options['messages']).forEach( message => {
-				let div = document.createElement('div')
-				div.innerHTML = message
-				toast_body.appendChild(div)
-			})
-		}
-	}
-}
-
 function on_task_checkbox_click(){
 	set_task_complete(this.dataset.task, this.dataset.complete!="true")
 }
@@ -86,14 +61,17 @@ function set_task_complete(task, complete){
 
 function set_selected_quest(quest){
 	let sidebar = document.getElementById('sidebar')
-	let selected = Object.values(sidebar.getElementsByClassName('selected')).filter(x => x.classList.contains('quest_sidebar_item'))[0]
+	let selected = Object.values(sidebar.getElementsByClassName('selected')).filter(x => x.classList.contains('quest_sidebar_item'))
+	if (selected.length == 0) selected = null; else selected = selected[0];
 	let new_selection = Object.values(sidebar.getElementsByClassName('unselected')).filter(x => x.dataset.quest == quest['id'])[0]
 
-	if(selected == null || new_selection == null) return;
-	if(selected.dataset.quest == new_selection.dataset.quest) return;
+	if(new_selection == null) return;
+	if(selected != null && selected.dataset.quest == new_selection.dataset.quest) return;
 
-	selected.classList.remove('selected')
-	selected.classList.add('unselected')
+	if(selected != null)  {
+		selected.classList.remove('selected')
+		selected.classList.add('unselected')
+	}
 	new_selection.classList.remove('unselected')
 	new_selection.classList.add('selected')
 
@@ -196,6 +174,14 @@ function reset_quest_ui(quest){
 	}else{
 		edit_quest_btn.style.display = "none"
 		edit_quest_btn.onclick = function(){}
+	}
+
+	if(quest['key']['resource_key'].includes('d')){
+		delete_quest_btn.style.display = "block"
+		delete_quest_btn.onclick = function(){ delete_quest(quest['id']) }
+	}else{
+		delete_quest_btn.style.display = "none"
+		delete_quest_btn.onclick = function(){}
 	}
 
 	if(quest['title'] != undefined) document.getElementById('selected_quest_title').innerHTML = quest['title']
@@ -434,6 +420,18 @@ function edit_quest(questid){
 			"info": "",
 			"image": "/static/images/error.png",
 		})
+	}
+}
+
+function delete_quest(questid){
+	if(confirm("Deleting the quest will permanently erase it from your database. Continue ?")){
+		var req = new XMLHttpRequest()
+		req.onload = function(){
+			window.location.href = `/quests`
+		}
+
+		req.open('DELETE',`/quest/${questid}`)
+		req.send()
 	}
 }
 
