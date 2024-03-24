@@ -4,7 +4,7 @@ from subprocess import Popen, PIPE, STDOUT
 MYSQL_CMD = """
 ALTER TABLE quest ADD owner varchar(36) not null;
 ALTER TABLE quest ADD CONSTRAINT foreign key (owner) references user(id);
-UPDATE quest SET owner = (SELECT id FROM user u, userAccount ua, accountPrivilege ap WHERE ap.label = "admin" AND ua.idP = ap.id AND u.id = ua.idU LIMIT 1);
+UPDATE quest SET owner = (SELECT u.id FROM user u, userAccount ua, accountPrivilege ap WHERE ap.label = "admin" AND ua.idP = ap.id AND u.id = ua.idU LIMIT 1);
 """
 
 
