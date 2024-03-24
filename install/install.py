@@ -150,14 +150,15 @@ if __name__ == "__main__":
 
 	cpath = Path(os.path.realpath(__file__))
 	schema_path = os.path.join(cpath.parent, "storages", "dbscheme.sql")
+	config_template_path = os.path.join(cpath.parent.parent,"config.toml.template")
 	config_path = os.path.join(cpath.parent.parent,"config.toml")
 
 	if not os.path.isfile(schema_path):
 		print("DB schema file not found at",schema_path)
 		sys.exit()
 
-	if not os.path.isfile(config_path):
-		print("Config file not found at",config_path)
+	if not os.path.isfile(config_template_path):
+		print("Config template file not found at",config_template_path)
 		sys.exit()
 
 	try:
@@ -180,7 +181,7 @@ if __name__ == "__main__":
 	with open(schema_path) as file:
 		stdout_data = p.communicate(input=file.read().replace("$database",credentials['database']))[0]
 
-	with open(config_path) as file:
+	with open(config_template_path) as file:
 		config = toml.loads(file.read())
 	config['storage']['credentials'].update(credentials)
 	with open(config_path,'w') as file:

@@ -7,7 +7,7 @@ debug = false
 
 templates_folder = "front/templates"
 static_folder = "front/static"
-secret_key = "gijaengasodjvnefNSAÙGqsmdigHS"
+secret_key = ""
 
 [app.blueprints.quests_log]
 
@@ -15,8 +15,6 @@ secret_key = "gijaengasodjvnefNSAÙGqsmdigHS"
 [storage.credentials]
 host = '0.0.0.0'
 port = 3306
-user = 
-password = 
 database = 'digiq'
 
 [temod]
