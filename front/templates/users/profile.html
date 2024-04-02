@@ -43,7 +43,9 @@
         <div class="inner">
           <h2>{{account['username']}}</h2>
           <div class="split style1" style="margin-top: 2em;">
+
             <section>
+
               <hr>
               <input type="hidden" id="accountid" value="{{account['id']}}"/>
               <form method="post">
@@ -58,7 +60,35 @@
                   </div>
                 </div>
               </form>
+
+              <hr>
+
+              <label>External apps</label>
+              <div class="fields" style="display: inline-block;">
+                <button id="gsync_button" style="width: fit-content; background-color: gray;"
+                  {% if gcalendar is defined and gcalendar is not none %}
+                    {% if gcalendar['sync'] %}
+                      onclick="activateGsync(false)">
+                      <img src="/static/images/google.png" style="width: 25px;">
+                      <span style="vertical-align: super;">&nbsp;Auto sync with google calendar</span>
+                      <img id="gsync_image" src="/static/images/checked.png" style="width: 25px;">
+                    {% else %}
+                      onclick="activateGsync(true)">
+                      <img src="/static/images/google.png" style="width: 25px;">
+                      <span style="vertical-align: super;">&nbsp;Auto sync with google calendar</span>
+                      <img id="gsync_image" src="/static/images/cross.png" style="width: 25px;">
+                    {% endif %}
+                  {% else %}
+                    onclick="activateGsync(true)">
+                    <img src="/static/images/google.png" style="width: 25px;">
+                    <span style="vertical-align: super;">&nbsp;Auto sync with google calendar</span>
+                    <img id="gsync_image" src="/static/images/cross.png" style="width: 25px;">
+                  {% endif %}
+                </button>
+              </div>
+
             </section>
+
           </div>
         </div>
       </div>
@@ -88,6 +118,7 @@
   </div>
 
   {% include "users/dialogs/getPassword.html" %}
+  {% include "dialogs/iframe.html" %}
 
   <script src="/static/js/jquery.min.js"></script>
   <script src="/static/js/jquery.scrollex.min.js"></script>
@@ -99,6 +130,61 @@
   <script src="/static/js/main.js"></script>
   <script src="/static/js/common.js"></script>
   <script src="/static/js/accounts.js"></script>
+
+  <script type="text/javascript">
+
+    function submitPostViaHiddenForm(url, params, winName) {
+        var newWindow = window.open(null, winName);
+        var f = $("<form target="+winName+" method='POST' style='display:none;'></form>").attr({
+            action: url
+        }).appendTo(document.body);
+
+        for (var i in params) {
+            if (params.hasOwnProperty(i)) {
+                $('<input type="hidden" />').attr({
+                    name: i,
+                    value: params[i]
+                }).appendTo(f);
+            }
+        }
+
+        f.submit();
+        f.remove();
+
+        return newWindow;
+    }
+
+    function activateGsync(sync){
+
+      tab = submitPostViaHiddenForm('/user/gcalendar',{sync:sync===true},'sync')
+      setTimeout(function(){refreshOnGCalendarSync(sync===true,tab)},500)
+
+    }
+
+    function refreshOnGCalendarSync(sync, tab){
+      let req = new XMLHttpRequest();
+      req.onload = function(){
+        js = JSON.parse(this.response)
+        if(js['data'] == null || js['data']['sync'] != sync){
+          setTimeout(function(){refreshOnGCalendarSync(sync===true)},1000)
+        }else{
+          if(sync){
+            document.getElementById('gsync_image').src = "/static/images/checked.png"
+            document.getElementById('gsync_button').onclick = function(){ activateGsync(false); }
+            tab.close()
+          }else{
+            document.getElementById('gsync_image').src = "/static/images/cross.png"
+            document.getElementById('gsync_button').onclick = function(){ activateGsync(true); }
+            tab.close()
+          }
+        }
+      }
+
+      req.open('GET','/user/gcalendar')
+      req.send()
+    }
+    
+  </script>
 
 </body>
 </html>

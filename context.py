@@ -2,7 +2,8 @@ from temod.ext.holders import clusters, joins, entities
 from temod_flask.ext import _readers_holder as _FormReaders
 from temod.storage.directory import DirectoryStorage
 
-def init_context():
+
+def init_context(config):
 	
 	for category, name, entity in entities.tuples():
 		_FormReaders.addEntity(entity)

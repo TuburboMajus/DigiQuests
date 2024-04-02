@@ -4,6 +4,9 @@ host = '0.0.0.0'
 port = 33412
 threaded = true
 debug = false
+ssl = true
+ssl_key = "resources/key.pem"
+ssl_cert = "resources/cert.pem"
 
 templates_folder = "front/templates"
 static_folder = "front/static"
@@ -11,6 +14,9 @@ secret_key = ""
 
 [app.blueprints.quests_log]
 
+[app.blueprints.google_services]
+credentials_file = 'resources/gcalendar_creds.json'
+tokens_dir = 'resources/tokens'
 
 [storage.credentials]
 host = '0.0.0.0'

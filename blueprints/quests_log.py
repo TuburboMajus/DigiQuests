@@ -4,6 +4,7 @@ from flask_login import current_user, login_required
 from temod.base.condition import Equals, Or, In 
 from temod.base.attribute import UUID4Attribute
 
+from datetime import datetime
 from pathlib import Path
 
 import traceback
@@ -116,6 +117,51 @@ def getArchivedQuests():
 	)
 
 
+@quests_log_blueprint.route("/quest/<string:quest_id>",methods=["GET"])
+@login_required
+def getQuest(quest_id):
+
+	quest = Quest.storage.get(id=quest_id)
+	if quest is None:
+		return abort(404)
+	key = ResourceKey.storage.get(resource=quest['id'], resource_type="quest", user=current_user['idU'])
+	if key is None:
+		key = ResourceKey.storage.get(resource=quest['id'], resource_type="quest", user=None)
+
+	if key is None or not( 'r' in key['resource_key'] ):
+		return abort(403)
+
+	active_quest = ActiveQuest.storage.get(user=current_user['id'])
+	tasks = sorted(Task.storage.list(quest=quest['id']),key=lambda x:x['task_order'])
+	events = {event['task']:event for event in Event.storage.list(quest=quest['id'])}
+
+	if request.args.get("format") == "json":
+		quest = quest.to_dict()
+		tasks_list = {task['id']:task.to_dict() for task in tasks}
+		for taskId, event in events.items():
+			tasks_list[taskId].update({"event": event.to_dict()})
+		quest.update({
+			"active":active_quest is not None and quest['id'] == active_quest['quest'],
+			"tasks":[task for task in sorted(tasks_list.values(),key=lambda x:x['task_order'])],
+			"key":key.to_dict()
+		})
+		return {"data":{"quest":quest}}
+
+	if key is None or not( 'w' in key['resource_key'] ):
+		return abort(403)
+
+	templates_folder = quests_log_blueprint.configuration["templates_folder"]
+	events = [events.get(task['id'],None) for task in tasks]
+	return render_template(
+		str(Path(templates_folder).joinpath('view.html')),
+		quest=quest,
+		tasks=tasks,
+		events=[(e.to_dict() if e is not None else None) for e in events],
+		tasks_data=zip(tasks, events),
+		quests_templates=templates_folder
+	)
+
+
 @quests_log_blueprint.route("/quest",methods=["GET"])
 @login_required
 def newQuest():
@@ -148,54 +194,25 @@ def createQuest():
 	for i,task in enumerate(data['tasks']):
 		tasks.append(Task(id=Task.storage.generate_value('id'),quest=quest['id'],task_order=i,content=task['content'],complete=False))
 
-	key = ResourceKey(id=ResourceKey.storage.generate_value('id'),resource=quest['id'],resource_type="quest",user=current_user['id'],resource_key="drwx")
+	key = ResourceKey(
+		id=ResourceKey.storage.generate_value('id'),resource=quest['id'],resource_type="quest",user=current_user['id'],resource_key="drwx"
+	)
 
 	Quest.storage.create(quest)
 	ResourceKey.storage.create(key)
-	for task in tasks:
+	for i, task in enumerate(tasks):
 		Task.storage.create(task)
+		if data['tasks'][i].get('event',None) is not None:
+			Event.storage.create(Event(
+				id=Event.storage.generate_value('id'),task=task['id'], quest=quest['id'],
+				start_date=datetime.fromisoformat(data['tasks'][i]['event']['start_date']),
+				end_date=datetime.fromisoformat(data['tasks'][i]['event']['end_date']),
+				synced=False
+			))
 
 	quest = quest.to_dict()
 	quest.update({"tasks":[task.to_dict() for task in tasks]})
 	return {"data":{"quest":quest}}
-
-
-@quests_log_blueprint.route("/quest/<string:quest_id>",methods=["GET"])
-@login_required
-def getQuest(quest_id):
-
-	quest = Quest.storage.get(id=quest_id)
-	if quest is None:
-		return abort(404)
-	key = ResourceKey.storage.get(resource=quest['id'], resource_type="quest", user=current_user['idU'])
-	if key is None:
-		key = ResourceKey.storage.get(resource=quest['id'], resource_type="quest", user=None)
-
-	if key is None or not( 'r' in key['resource_key'] ):
-		return abort(403)
-
-	active_quest = ActiveQuest.storage.get(user=current_user['id'])
-	tasks = sorted(Task.storage.list(quest=quest['id']),key=lambda x:x['task_order'])
-
-	if request.args.get("format") == "json":
-		quest = quest.to_dict()
-		quest.update({
-			"active":active_quest is not None and quest['id'] == active_quest['quest'],
-			"tasks":[task.to_dict() for task in sorted(tasks,key=lambda x:x['task_order'])],
-			"key":key.to_dict()
-		})
-		return {"data":{"quest":quest}}
-
-	if key is None or not( 'w' in key['resource_key'] ):
-		return abort(403)
-
-	templates_folder = quests_log_blueprint.configuration["templates_folder"]
-	return render_template(
-		str(Path(templates_folder).joinpath('view.html')),
-		quest=quest,
-		tasks=tasks,
-		quests_templates=templates_folder
-	)
 
 
 @quests_log_blueprint.route("/quest/<string:quest_id>",methods=["PUT"])
@@ -212,7 +229,6 @@ def editQuest(quest_id):
 	if key is None or not( 'w' in key['resource_key'] ):
 		return abort(403)
 
-
 	data = dict(request.json)
 
 	tasks = {task['id']:task for task in sorted(Task.storage.list(quest=quest['id']),key=lambda t:t['task_order'])}
@@ -220,6 +236,7 @@ def editQuest(quest_id):
 	# Remove deleted tasks
 	for task_id in tasks:
 		if not task_id in new_tasks_ids:
+			Event.storage.update({"quest":None,"task":None, "synced": False},task=task_id)
 			Task.storage.delete(id=task_id)
 
 	# Update other tasks
@@ -229,10 +246,35 @@ def editQuest(quest_id):
 			tasks[task['id']].takeSnapshot().setAttributes(content=task['content'], task_order=i)
 			Task.storage.updateOnSnapshot(tasks[task['id']])
 			new_tasks.append(tasks[task['id']])
+			event = Event.storage.get(task=task['id'])
+			if task.get('event',None) is not None and event is None:
+				Event.storage.create(Event(
+					id=Event.storage.generate_value('id'),task=task['id'], quest=quest['id'],
+					start_date=datetime.fromisoformat(task['event']['start_date']),
+					end_date=datetime.fromisoformat(task['event']['end_date']),
+					synced=False
+				))
+			elif task.get('event',None) is None and event is not None:
+				event.takeSnapshot().setAttributes(synced=False, task=None, quest=None)
+				Event.storage.updateOnSnapshot(event)
+			elif task.get('event',None) is not None and event is not None:
+				event.takeSnapshot().setAttributes(
+					start_date=datetime.fromisoformat(task['event']['start_date']),
+					end_date=datetime.fromisoformat(task['event']['end_date']),
+					synced=False
+				)
+				Event.storage.updateOnSnapshot(event)
 		else:
 			new_task = Task(id=Task.storage.generate_value('id'),quest=quest['id'],task_order=i,content=task['content'],complete=False)
 			Task.storage.create(new_task)
 			new_tasks.append(new_task)
+			if task.get('event',None) is not None:
+				Event.storage.create(Event(
+					id=Event.storage.generate_value('id'), task=new_task['id'], quest=quest['id'],
+					start_date=datetime.fromisoformat(task['event']['start_date']),
+					end_date=datetime.fromisoformat(task['event']['end_date']),
+					synced=False
+				))
 
 	quest.setAttributes(
 		title=data['title'],description=data['description'],reccurence=Quest.RECCURENCES[data['periodicity']['type']],
@@ -260,6 +302,7 @@ def deleteQuest(quest_id):
 		return abort(403)
 
 	ResourceKey.storage.delete(resource=quest['id'], resource_type="quest", many=True)
+	Event.storage.update({"quest":None,"task":None, "synced": False},quest=quest['id'])
 	Task.storage.delete(quest=quest['id'],many=True)
 	Quest.storage.delete(quest=quest['id'])
 
@@ -351,17 +394,48 @@ def editTask(task_id):
 		return abort(403)
 
 	js = dict(request.json)
+	eventjs = js.pop('event',None)
 	task.takeSnapshot().setAttributes(**js)
-
 	task.storage.updateOnSnapshot(task)
 
+	event = Event.storage.get(task=task['id'])
+	if event is None and eventjs is not None:
+		Event.storage.create(Event(
+			id=Event.storage.generate_value('id'), task=task['id'], quest=quest['id'],
+			start_date=datetime.fromisoformat(eventjs['start_date']),
+			end_date=datetime.fromisoformat(eventjs['end_date']),
+			synced=False
+		))
+	elif event is not None and eventjs is not None:
+		event.takeSnapshot().setAttributes(
+			start_date=datetime.fromisoformat(eventjs['start_date']),
+			end_date=datetime.fromisoformat(eventjs['end_date']),
+			synced=False
+		)
+		Event.storage.updateOnSnapshot(event)
+	elif event is not None and eventjs is None:
+		event.takeSnapshot().setAttributes(task=None,quest=None, synced=False)
+		Event.storage.updateOnSnapshot(event)
+
+	active_quest = ActiveQuest.storage.get(user=current_user['id'])
+	is_active = active_quest is not None and quest['id'] == active_quest['quest']
 	tasks = list(Task.storage.list(quest=quest['id']))
 	if all([t['complete'] for t in tasks]):
 		quest.setAttribute("complete",True)
 		Quest.storage.updateOnSnapshot(quest)
+		if is_active:
+			ActiveQuest.storage.delete(user=current_user['id'])
+			is_active = False
 	else:
 		if quest['complete']:
 			quest.setAttribute("complete",False)
 			Quest.storage.updateOnSnapshot(quest)
 
-	return {"data":{"task":task.to_dict(), "quest": quest.to_dict()}}
+	quest = quest.to_dict()
+	quest.update({
+		"active":is_active,
+		"tasks":[task.to_dict() for task in sorted(tasks,key=lambda x:x['task_order'])],
+		"key":key.to_dict()
+	})
+
+	return {"data":{"task":task.to_dict(), "quest": quest}}

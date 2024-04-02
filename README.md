@@ -3,7 +3,9 @@ A quest log flask app to manage your to do list in a fun way with an auto-check 
 
 
 ## What has been done 
-The app allows for now for a single user to add and edit quests to the quest log. This is the V0 and more work will be done shortly.
+The app allows for now for a single user to add, edit & delete quests to the quest log.
+
+- Enable users to sync quests/tasks with other calendars (Google Calendar)
 
 ## install
 
@@ -16,8 +18,44 @@ cd DigiQuests
 python3 -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
-python install/install.py # Enter your mysql database credentials
+python install/setup.py # Enter your mysql database credentials
+
+systemctl enable digiq.service
+systemctl enable digiq.timer
+systemctl start digiq.timer
+
 python run.py
+```
+
+## update
+
+To update your current version of DigiQuests, stop the server, then go to your DigiQuests directory and do the following:
+
+```console
+git pull
+cd DigiQuests
+pip install --upgrade -r requirements.txt
+python install/update.py # Enter your mysql database credentials
+
+python run.py
+```
+
+Check if digiq service is enabled and running:
+```console
+systemctl is-enabled digiq.service # should show enabled
+systemctl is-enabled digiq.timer # should show enabled
+systemctl is-active digiq.timer # should show active
+```
+
+if any of digiq.service or digiq.timer is not enabled execute
+```console
+systemctl enable digiq.service 
+systemctl enable digiq.timer
+```
+
+if digiq.timer is not active execute
+```console
+systemctl start digiq.timer
 ```
 
 ## What's to be done
@@ -25,7 +63,6 @@ python run.py
 - Users management
 - Sharing quests with other users and rights management
 - Create auto-trackers to observe tasks & quests completion
-- Enable users to sync quests with other calendars (google calendar, ...)
 - Mobile app (for this one I'm waiting a bit If by any chance **PZED** will find this git and contact me to see if we can join efforts to build upon his app as I didn't succeed in finding his contact.)
 
 ## Author

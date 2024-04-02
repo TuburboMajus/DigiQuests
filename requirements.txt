@@ -1,8 +1,11 @@
 Flask==3.0.2
 Flask_Login==0.6.3
-temod==2.0.8
+mysql-connector-python==8.3.0
+packaging==24.0
+temod==2.0.9
 temod_flask==2.0.4
 toml==0.10.2
 waitress==3.0.0
-mysql-connector-python==8.3.0
-packaging==24.0
+google-api-python-client==2.124.0
+google-auth-httplib2==0.2.0
+google-auth-oauthlib==1.2.0

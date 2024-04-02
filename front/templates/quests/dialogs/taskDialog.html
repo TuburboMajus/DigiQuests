@@ -1,0 +1,184 @@
+<div class="modal" tabindex="-1" id="newTaskDialog">
+  <div class="modal-dialog">
+    <div class="modal-content" style="background-color: #252a2f;">
+      <div class="modal-header">
+        <h5 class="modal-title">Task</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="new_task_edited" value=""/>
+        <input type="text" name="description" id="ntd_taskDescription" placeholder="Task description..." />
+        <hr>
+        <div align="center">
+          <button id="ntd_associateEventBtn" onclick="ntd_associateEvent()" style="width: fit-content; background-color: gray;">Associate event</button>
+          <div id="ntd_NoReccurenceEventDiv" class="row" style="display: none;">
+            <div class="col col-md-10">
+              <strong>Event start:</strong>
+              <input type="date" class="form-control" id="ntd_eventStartDate">
+              <input type="time" class="form-control" id="ntd_eventStartTime">
+              <strong>Event end:</strong>
+              <input type="date" class="form-control" id="ntd_eventEndDate">
+              <input type="time" class="form-control" id="ntd_eventEndTime">
+            </div>
+            <div class="col col-md-2" style="width: fit-content; max-width: fit-content;">
+              <button class="editable_task_full_button skr-button-img" onclick="ntd_deassociateEvent()"><img src="/static/images/trash.png"></button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <div id="ntd_errorMessage" class="form-control" style="color: red; display: none;"></div>
+        <button type="button" class="button" style="background: #514545; border-radius: 5px !important; color: white !important;width: fit-content;" data-bs-dismiss="modal" onclick="ntd_onTaskCanceled()">Cancel</button>
+        <button id="ntd_confirmButton" type="button" class="button" style="background: black; border-radius: 5px !important; color: white !important;width: fit-content;" onclick="ntd_onTaskConfirmed()">Add</button>
+      </div>
+    </div>
+  </div>
+</div>
+<style type="text/css">
+  .ntd_ErrorInput{
+    border-color: red !important;
+  }
+</style>
+<script type="text/javascript">
+  var ntd_onTaskConfirmedCallback = null
+  var ntd_onTaskCanceledCallback = null
+  var ntd_eventType = "once"
+  var ntd_eventAssociated = false
+
+  function ntd_setConfirmCallback(callback){
+    ntd_onTaskConfirmedCallback = callback;
+  }
+
+  function ntd_setCancelCallback(callback){
+    ntd_onTaskCanceledCallback = callback;
+  }
+
+  function ntd_showError(message){
+    let error = document.getElementById('ntd_errorMessage')
+    error.innerHTML = message;
+    error.style.display = "block"
+  }
+
+  function ntd_validateTask(task){
+    if(task['content'].length == 0){
+      document.getElementById('ntd_taskDescription').classList.add('ntd_ErrorInput')
+      ntd_showError("Task description can't be empty")
+      return false;
+    }
+
+    if(task['event'] != null){
+      if(task['event']['start']['date'] == undefined || task['event']['start']['date'] == null || task['event']['start']['date'] == ""){
+        document.getElementById('ntd_eventStartDate').classList.add('ntd_ErrorInput')
+        ntd_showError("Invalid start date"); return false;
+      }
+      if(task['event']['start']['time'] == undefined || task['event']['start']['time'] == null || task['event']['start']['time'] == ""){
+        document.getElementById('ntd_eventStartTime').classList.add('ntd_ErrorInput')
+        ntd_showError("Invalid start time"); return false;
+      }
+      sd = new Date(task['event']['start']['date']+" "+task['event']['start']['time'])
+      if(sd == "Invalid Date"){
+        document.getElementById('ntd_eventStartDate').classList.add('ntd_ErrorInput')
+        document.getElementById('ntd_eventStartTime').classList.add('ntd_ErrorInput')
+        ntd_showError("Invalid start date"); return false;
+      }else if(sd < new Date()){
+        document.getElementById('ntd_eventStartDate').classList.add('ntd_ErrorInput')
+        document.getElementById('ntd_eventStartTime').classList.add('ntd_ErrorInput')
+        ntd_showError("Start date can't be before now"); return false;
+      }
+
+      if(task['event']['end']['date'] == undefined || task['event']['end']['date'] == null || task['event']['end']['date'] == ""){
+        document.getElementById('ntd_eventEndDate').classList.add('ntd_ErrorInput')
+        ntd_showError("Invalid end date"); return false;
+      }
+      if(task['event']['end']['time'] == undefined || task['event']['end']['time'] == null || task['event']['end']['time'] == ""){
+        document.getElementById('ntd_eventEndTime').classList.add('ntd_ErrorInput')
+        ntd_showError("Invalid end time"); return false;
+      }
+      ed = new Date(task['event']['end']['date']+" "+task['event']['end']['time'])
+      if(ed == "Invalid Date"){
+        document.getElementById('ntd_eventEndDate').classList.add('ntd_ErrorInput')
+        document.getElementById('ntd_eventStartTime').classList.add('ntd_ErrorInput')
+        ntd_showError("Invalid end date"); return false;
+      }else if(ed < sd){
+        document.getElementById('ntd_eventEndDate').classList.add('ntd_ErrorInput')
+        document.getElementById('ntd_eventStartTime').classList.add('ntd_ErrorInput')
+        ntd_showError("End date can't be before start date"); return false;
+      }
+    }
+    return true
+  }
+
+  function ntd_onTaskCanceled(){
+    if (ntd_onTaskCanceledCallback != null) ntd_onTaskCanceledCallback();
+  }
+
+  function ntd_setConfirmText(text){
+    ntd_confirmButton.innerHTML = text
+  }
+
+  function ntd_onTaskConfirmed(){
+    let task = {
+      "content":document.getElementById("ntd_taskDescription").value,
+      "event":null
+    }
+
+    if(ntd_eventAssociated){
+      task['event'] = {
+        "start":{"date":document.getElementById('ntd_eventStartDate').value,"time":document.getElementById('ntd_eventStartTime').value},
+        "end":{"date":document.getElementById('ntd_eventEndDate').value,"time":document.getElementById('ntd_eventEndTime').value}
+      }
+    }
+
+    if(!ntd_validateTask(task)) return;
+
+    if (ntd_onTaskConfirmedCallback != null) ntd_onTaskConfirmedCallback(task);
+    $('#newTaskDialog').modal('hide')
+  }
+
+  function ntd_associateEvent(){
+    let btn = document.getElementById('ntd_associateEventBtn')
+    let noRecDiv = document.getElementById('ntd_NoReccurenceEventDiv')
+
+    btn.style.display = "none";
+    noRecDiv.style.display = "block";
+
+    ntd_eventAssociated = true
+  }
+
+  function ntd_deassociateEvent(){
+    let btn = document.getElementById('ntd_associateEventBtn')
+    let noRecDiv = document.getElementById('ntd_NoReccurenceEventDiv')
+
+    btn.style.display = "block";
+    noRecDiv.style.display = "none";
+
+    ntd_eventAssociated = false;
+  }
+
+  function ntd_resetDialog(){
+    let taskD = document.getElementById('ntd_taskDescription')
+    let eSDate = document.getElementById('ntd_eventStartDate')
+    let eSTime = document.getElementById('ntd_eventStartTime')
+    let eEDate = document.getElementById('ntd_eventEndDate')
+    let eETime = document.getElementById('ntd_eventEndTime')
+    taskD.classList.remove('ntd_ErrorInput'); taskD.value = ""
+    eSDate.classList.remove('ntd_ErrorInput'); eSDate.value = ""
+    eSTime.classList.remove('ntd_ErrorInput'); eSTime.value = ""
+    eEDate.classList.remove('ntd_ErrorInput'); eEDate.value = ""
+    eETime.classList.remove('ntd_ErrorInput'); eETime.value = ""
+    document.getElementById('ntd_errorMessage').style.display = "none"
+    ntd_deassociateEvent()
+  }
+
+  function ntd_setupDialog(task){
+    ntd_resetDialog();
+    document.getElementById("ntd_taskDescription").value = task['content']
+    if(task['event'] != undefined && task['event'] != null){
+      document.getElementById('ntd_eventStartDate').value = task['event']['start']['date']
+      document.getElementById('ntd_eventStartTime').value = task['event']['start']['time']
+      document.getElementById('ntd_eventEndDate').value = task['event']['end']['date']
+      document.getElementById('ntd_eventEndTime').value = task['event']['end']['time']
+      ntd_associateEvent()
+    }
+  }
+</script>

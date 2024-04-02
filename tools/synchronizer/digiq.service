@@ -1,0 +1,12 @@
+[Unit]
+Description=Synchronizes DigiQuests events with external apps
+After=mysql.service
+StartLimitIntervalSec=0
+
+[Service]
+Type=oneshot
+User=$user
+ExecStart=/bin/bash $script_path $logging_dir $venv_path
+
+[Install]
+WantedBy=multi-user.target

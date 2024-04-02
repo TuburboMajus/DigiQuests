@@ -38,9 +38,11 @@ users_blueprint.setup = setup
 @login_required
 def getProfile():
 	account = AccountFile.storage.get(id=current_user['id'])
+	gcalendar = UserGCalendar.storage.get(user=current_user['id'])
 	return render_template(
 		"users/profile.html",
-		account=account
+		account=account,
+		gcalendar=gcalendar
 	)
 
 
@@ -72,3 +74,29 @@ def updateAccount(accountid):
 	AccountFile.storage.updateOnSnapshot(account)
 
 	return Response(200, 'update success')
+
+
+@users_blueprint.route('/user/gcalendar',methods=['GET'])
+@login_required
+def getGcalendar():
+	gcalendar = UserGCalendar.storage.get(user=current_user['id'])
+
+	if gcalendar is None:
+		return {"data":None}
+
+	return {"data":gcalendar.to_dict()}
+
+
+@users_blueprint.route('/user/gcalendar',methods=['POST'])
+@login_required
+def syncGcalendar():
+	gcalendar = UserGCalendar.storage.get(user=current_user['id'])
+	data = dict(request.form)
+
+	if gcalendar is None:
+		return redirect("/gservices/calendar?final_url=/user/gcalendar")
+	else:
+		gcalendar.takeSnapshot().setAttribute("sync",data['sync']=="true")
+		UserGCalendar.storage.updateOnSnapshot(gcalendar)
+
+	return {"success":"ok"}

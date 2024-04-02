@@ -218,6 +218,11 @@ function add_new_task(task){
 	let tasks_list = document.getElementById('new_tasks_list')
 	let task_item = document.createElement('li')
 	let task_name = document.createElement('strong')
+	let task_startDate = document.createElement('input')
+	let task_startTime = document.createElement('input')
+	let task_endDate = document.createElement('input')
+	let task_endTime = document.createElement('input')
+
 	let edit_button = document.createElement('button')
 	let edit_button_img = document.createElement('img')
 	let delete_button = document.createElement('button')
@@ -228,8 +233,17 @@ function add_new_task(task){
 	let down_button_img = document.createElement('img')
 	let dir_buttons_div = document.createElement('div')
 
+	let has_task = task['event'] != undefined && task['event'] != null
+
 	task_item.classList.add('editable_task_item')
 	if(task['id'] != undefined) task_item.dataset.task = task['id']
+
+	if(has_task){
+		task_startDate.type = "hidden"; task_startDate.classList.add('task_startDate'); task_startDate.value = task['event']['start']['date']
+		task_startTime.type = "hidden"; task_startTime.classList.add('task_startTime'); task_startTime.value = task['event']['start']['time']
+		task_endDate.type = "hidden"; task_endDate.classList.add('task_endDate'); task_endDate.value = task['event']['end']['date']
+		task_endTime.type = "hidden"; task_endTime.classList.add('task_endTime'); task_endTime.value = task['event']['end']['time']
+	}
 
 	task_name.innerHTML = task['content']
 	task_name.classList.add('task_name')
@@ -269,6 +283,11 @@ function add_new_task(task){
 	task_item.appendChild(edit_button)
 	task_item.appendChild(delete_button)
 	task_item.appendChild(dir_buttons_div)
+
+	if(has_task){
+		task_item.appendChild(task_startDate);task_item.appendChild(task_startTime);
+		task_item.appendChild(task_endDate);task_item.appendChild(task_endTime);	
+	}
 	tasks_list.insertBefore(task_item, new_task_li)
 }
 
@@ -277,25 +296,57 @@ function update_new_task(task, task_element_id){
 	if(task_dom == null) return;
 
 	task_dom.getElementsByClassName('task_name')[0].innerHTML = task['content']
+	if(task['event'] == undefined || task['event'] == null){
+		try{task_dom.getElementsByClassName('task_startDate')[0].remove()}catch{}
+		try{task_dom.getElementsByClassName('task_startTime')[0].remove()}catch{}
+		try{task_dom.getElementsByClassName('task_endDate')[0].remove()}catch{}
+		try{task_dom.getElementsByClassName('task_endTime')[0].remove()}catch{}
+	}else{
+		try{task_dom.getElementsByClassName('task_startDate')[0].value = task['event']['start']['date']}
+		catch{
+			let task_startDate = document.createElement('input')
+			task_startDate.type = "hidden"; task_startDate.classList.add('task_startDate'); task_startDate.value = task['event']['start']['date']
+			task_dom.appendChild(task_startDate)
+		}
+		try{task_dom.getElementsByClassName('task_startTime')[0].value = task['event']['start']['time']}
+		catch{
+			let task_startTime = document.createElement('input')
+			task_startTime.type = "hidden"; task_startTime.classList.add('task_startTime'); task_startTime.value = task['event']['start']['time']
+			task_dom.appendChild(task_startTime)
+		}
+		try{task_dom.getElementsByClassName('task_endDate')[0].value = task['event']['end']['date']}
+		catch{
+			let task_endDate = document.createElement('input')
+			task_endDate.type = "hidden"; task_endDate.classList.add('task_endDate'); task_endDate.value = task['event']['end']['date']
+			task_dom.appendChild(task_endDate)
+		}
+		try{task_dom.getElementsByClassName('task_endTime')[0].value = task['event']['end']['time']}
+		catch{
+			let task_endTime = document.createElement('input')
+			task_endTime.type = "hidden"; task_endTime.classList.add('task_endTime'); task_endTime.value = task['event']['end']['time']
+			task_dom.appendChild(task_endTime)
+		}
+	}
 }
 
 
 function edit_new_task_from_list(btn){
 	let task = {}
 	if( btn == undefined || btn.tagName == undefined) btn = this;
-	task['content'] = btn.parentNode.getElementsByClassName('task_name')[0].innerHTML
-	edit_new_task(task, btn.parentNode.id)
+	edit_new_task(task_from_dom(btn.parentNode), btn.parentNode.id)
 }
 
 function create_new_task(){
-	document.getElementById('new_task_description').value = ""
-	document.getElementById('new_task_edited').value = ""
+	ntd_resetDialog()
+	ntd_setConfirmCallback(add_new_task)
+	ntd_setConfirmText('Add')
 	$('#newTaskDialog').modal('show')
 }
 
 function edit_new_task(task, task_element_id){
-	document.getElementById('new_task_description').value = task['content']
-	document.getElementById('new_task_edited').value = task_element_id
+	ntd_setupDialog(task)
+	ntd_setConfirmCallback(function(x){update_new_task(x,task_element_id)})
+	ntd_setConfirmText('Edit')
 	$('#newTaskDialog').modal('show')
 }
 
@@ -314,8 +365,6 @@ function move_task_up(btn){
 		if(tasks[i].id == task_item.id) task_order = i;
 	}
 
-	console.log(task_item)
-	console.log(task_order)
 	if(task_order == null || task_order == 0) return;
 	tasks_list.removeChild(task_item)
 	tasks_list.insertBefore(task_item,tasks[task_order-1])
@@ -331,12 +380,76 @@ function move_task_down(btn){
 		if(tasks[i].id == task_item.id) task_order = i;
 	}
 
-	console.log(task_item)
-	console.log(task_order)
 	if(task_order == null || task_order == tasks.length-1) return;
 	tasks_list.removeChild(task_item)
 	if(task_order == tasks.length-2) tasks_list.insertBefore(task_item,document.getElementById('new_task_li'))
 	else tasks_list.insertBefore(task_item,tasks[task_order+2])
+}
+
+function task_from_dom(task_dom){
+
+	let task = {
+		"content":task_dom.getElementsByClassName('task_name')[0].innerHTML,
+		"event":null
+	}
+
+	if(task_dom.dataset.task != undefined) task['id'] = task_dom.dataset.task
+
+	let task_startDate = task_dom.getElementsByClassName('task_startDate')[0]
+	if(task_startDate != undefined){
+		task['event'] = {
+			"start":{
+				"date":task_startDate.value,
+				"time":task_dom.getElementsByClassName('task_startTime')[0].value
+			},"end":{
+				"date":task_dom.getElementsByClassName('task_endDate')[0].value,
+				"time":task_dom.getElementsByClassName('task_endTime')[0].value
+			}
+		}
+	}
+
+	return task
+}
+
+
+function format_task_for_server(task){
+	if(task['event'] != undefined && task['event'] != null){
+		task['event'] = {
+			"start_date":new Date(task['event']['start']['date']+" "+task['event']['start']['time']).toISOString().split('Z')[0],
+			"end_date":new Date(task['event']['end']['date']+" "+task['event']['end']['time']).toISOString().split('Z')[0]
+		}
+		delete task['event']['start']
+		delete task['event']['end']
+	}
+	return task
+}
+
+function format_event_from_server(task, event){
+	if(event == null) {task['event'] = event}
+	else{
+		let sDate = new Date(event['start_date']+"Z")
+		let eDate = new Date(event['end_date']+"Z")
+		let sMDate = sDate.getMonth()+1;
+		let sDDate = sDate.getDate();
+		let eMDate = eDate.getMonth()+1;
+		let eDDate = eDate.getDate();
+		let sHTime = sDate.getHours();
+		let sMTime = sDate.getMinutes();
+		let eHTime = eDate.getHours();
+		let eMTime = eDate.getMinutes();
+		task['event'] = {
+			"start":{
+				"date":`${sDate.getFullYear()}-${(sMDate < 10)?'0':''}${sMDate}-${(sDDate < 10)?'0':''}${sDDate}`,
+				"time":`${(sHTime < 10)?'0':''}${sHTime}:${(sMTime < 10)?'0':''}${sMTime}`
+			},
+			"end":{
+				"date":`${eDate.getFullYear()}-${(eMDate < 10)?'0':''}${eMDate}-${(eDDate < 10)?'0':''}${eDDate}`,
+				"time":`${(eHTime < 10)?'0':''}${eHTime}:${(eMTime < 10)?'0':''}${eMTime}`
+			}
+		}
+	}
+	console.log(task)
+	return task
 }
 
 
@@ -358,10 +471,8 @@ function create_new_quest(){
 	).filter( 
 		x => x.id != "new_task_li"
 	).map( 
-		y => { return {"content":y.getElementsByClassName('task_name')[0].innerHTML};}
+		y => format_task_for_server(task_from_dom(y))
 	)
-
-	console.log(quest)
 
 	errors = validate_quest(quest)
 	if(errors.length == 0){
@@ -395,11 +506,7 @@ function edit_quest(questid){
 	).filter( 
 		x => x.id != "new_task_li"
 	).map( 
-		y => { 
-			task = {"content":y.getElementsByClassName('task_name')[0].innerHTML};
-			if(y.dataset.task != undefined) task['id'] = y.dataset.task
-			return task;
-		}
+		y => format_task_for_server(task_from_dom(y))
 	)
 
 	errors = validate_quest(quest)

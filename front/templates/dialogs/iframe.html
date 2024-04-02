@@ -1,0 +1,23 @@
+<div class="modal" tabindex="-1" id="iframeDialog">
+  <div class="modal-dialog" style="width: fit-content; max-width: fit-content;">
+    <div class="modal-content" style="background-color: #252a2f;">
+      <div class="modal-header">
+        <h5 class="modal-title" id="iframeDialog_title"></h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body" style="width: fit-content;">
+        <iframe id="iframeDialog_iframe" style="width: 600px; height: 600px;"></iframe>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="button" style="background: black; border-radius: 5px !important; color: white !important;width: fit-content;" onclick="getPasswordDialog_callback(document.getElementById('getPasswordDialog_password').value)" data-bs-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+<script type="text/javascript">
+  var getPasswordDialog_callback = function(x){};
+
+  function getPasswordDialog_setCallback(callback){
+    getPasswordDialog_callback = callback
+  }
+</script>

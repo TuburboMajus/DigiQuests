@@ -45,6 +45,12 @@ create table userAccount(
     foreign key (idP) references accountPrivilege(id)
 );
 
+CREATE TABLE userGCalendar (
+    user varchar(36) primary key not null,
+    calendar varchar(200) not null,
+    sync bool not null default 1,
+    foreign key (user) references user(id)
+);
 
 /***** QUESTS *****/
 
@@ -85,6 +91,29 @@ create table activeQuest(
 );
 
 
+/***** EVENTS *****/
+
+create table event(
+    id varchar(36) primary key not null,
+    quest varchar(36),
+    task varchar(36),
+    start_date datetime not null,
+    end_date datetime not null,
+    synced bool not null default 0,
+    constraint unique_event unique (task),
+    foreign key (quest) references quest(id),
+    foreign key (task) references task(id)
+);
+
+create table gevent(
+    event varchar(36) primary key not null,
+    owner varchar(36) not null,
+    gcalendar_id varchar(200) not null,
+    gevent_id varchar(200) not null,
+    foreign key (event) references event(id),
+    foreign key (owner) references user(id)
+);
+
 /***** RESOURCE *****/
 
 create table resourceKey(
@@ -95,4 +124,12 @@ create table resourceKey(
     resource_key varchar(250) not null,
     constraint unique_key unique (resource, user),
     foreign key (user) references user(id)
+);
+
+/***** JOBS *****/
+
+create table job(
+    name varchar(50) primary key not null,
+    state varchar(20) not null default "IDLE",
+    last_exit_code int
 );

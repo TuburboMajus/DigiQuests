@@ -72,13 +72,17 @@
 
 	</section>
 
-	{% include quests_templates+"/dialogs/newTask.html" %}
+	{% include quests_templates+"/dialogs/taskDialog.html" %}
 </div>
 
 {% endblock %}
 
 {% block postscripts %} 
 <script type="text/javascript">
-	{% for task in tasks %}add_new_task({"content":"{{task['content']}}"});{% endfor %}
+	{%- for task, event in tasks_data -%}
+		{% if event is not none%}add_new_task(format_event_from_server({{task.to_dict() | tojson}},{{event.to_dict() | tojson}}));
+		{% else %}add_new_task(format_event_from_server({{task.to_dict() | tojson}}, null))
+		{% endif %}
+	{% endfor %}
 </script>
 {% endblock %}

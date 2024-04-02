@@ -1,85 +1,24 @@
 from temod.storage.mysql import MysqlEntityStorage
-from subprocess import Popen, PIPE, STDOUT
 from packaging import version
 from pathlib import Path
-from uuid import uuid4 
+
+import sys
+import os
+
+if not os.getcwd() in sys.path:
+	sys.path.append(os.getcwd())
+
+from install import common_funcs
+from core.entity import *
 
 import importlib.machinery
 import mysql.connector
-import pprinter
+import traceback
+import argparse
 import logging
-import sys
-import re
-import os
 
 
-ALL_VERSIONS = ["0.0.0","1.0.0"]
-LATEST_VERSION = "1.0.0"
-
-
-def get_logger():
-	logger = logging.getLogger()
-	logger.setLevel(logging.DEBUG)
-
-	handler = logging.StreamHandler(sys.stdout)
-	handler.setLevel(logging.DEBUG)
-	formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-	handler.setFormatter(formatter)
-	logger.addHandler(handler)
-
-	return logger
-
-
-def get_mysql_credentials():
-	while True:
-		host = input("Enter you mysql host (default localhost):")
-		if host == "" or host == "localhost":
-			host = "127.0.0.1"
-		if is_valid_hostname(host):
-			break
-		logger.warning(f"Invalid host: {host}")
-
-	while True:
-		try:
-			port = input("Enter you mysql port (default 3306):")
-			if port == "":
-				port = 3306
-			port = int(port)
-			if port >= 1024 and port <= 49151:
-				break
-			logger.warning(f"Invalid port (must be between 1024 and 49151)")
-		except:
-			logger.warning(f"Invalid port")
-
-	user = input("Enter your mysql user: ")
-	password = input("Enter your mysql password:")
-	database = input("Enter your mysql database name:")
-
-	if user == "":
-		user = None
-	if password == "":
-		password == None
-
-	print("\n\n"+"*"*20)
-	print("Database: ")
-	print(f"ip = {host}:{port}")
-	print(f"user = {user}")
-	print(f"password = {password}")
-	print(f"database = {database}")
-	rspn = input("confirm ? (y/*)").lower()
-	if rspn == "y":
-		return {"host":host,"port":port, "user":user, "password":password, "database": database}
-	print()
-	return get_mysql_credentials()
-
-
-def is_valid_hostname(hostname):
-	if hostname == "localhost":
-		return True
-	ip_pattern = r'^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$'
-	if re.match(ip_pattern, hostname):
-		return True
-	return False
+ALL_VERSIONS = ["0.0.0","1.0.0","1.0.1"]
 
 
 def detected_installed_version(credentials):	
@@ -87,69 +26,92 @@ def detected_installed_version(credentials):
 	return digiquest['version']
 
 
-def update_from_version(version, credentials):
-	cpath = Path(os.path.realpath(__file__))
-	script = os.path.join(cpath.parent,"updates",f"update.{version}.py")
+def update_from_version(version, app_paths, app_config, mysql_credentials, args):
+	script = os.path.join(app_paths["updates"],f"update.{version}.py")
 	if not os.path.isfile(script):
-		logger.error(f"Update script from version {version} not found.")
+		LOGGER.error(f"Update script from version {version} not found.")
 		return
 
 	loader = importlib.machinery.SourceFileLoader(f'upd_{version.replace(".","_")}', script)
 	mod = loader.load_module()
 
-	return mod.launch_update(credentials)
+	return mod.launch_update(common_funcs, app_paths, app_config, mysql_credentials=mysql_credentials, script_args=args)
+
+
+def update(app_paths):
+	config = common_funcs.load_toml_config(app_paths['config_file'])
+	try:
+		mysql_credentials = config['storage']['credentials']
+		LOGGER.info("Mysql database credentials were detected from your digiq installation.")
+	except:
+		LOGGER.warning("Couldn't read Mysql credentials from configs file")
+		mysql_credentials = {}
+
+	mysql_credentials = common_funcs.get_mysql_credentials(**mysql_credentials)
+
+	all_versions = sorted(ALL_VERSIONS, key=lambda x:version.parse(x))
+	latest_version = all_versions[-1]
+	dgq_version = detected_installed_version(mysql_credentials)
+	if dgq_version == latest_version:
+		LOGGER.info(f"DigiQuest is already at the lastest version {dgq_version}")
+		return False
+
+	LOGGER.info(f"DigiQuest installed version detected: {dgq_version}")
+	rspn = input(f"Update to latest version {latest_version} ? (y/*)").lower()
+	to_version = latest_version
+	if rspn != "y":
+		rspn = input("Update to a specific version ? (y/*)").lower()
+		if rspn != "y":
+			LOGGER.info("Exiting update script.")
+			sys.exit()
+		to_version = input("To which version do you want to update ?")
+
+	if not to_version in all_versions:
+		LOGGER.error(f"Version {version} not found. Available versions are {', '.join(all_versions)}.")
+		return False
+
+	final_config = common_funcs.load_toml_config(app_paths['template_config_file'])
+	while dgq_version != to_version:
+
+		if not update_from_version(dgq_version, app_paths, common_funcs.merge_configs(final_config, config), mysql_credentials, args):
+			LOGGER.error(f"Update from version {dgq_version} failed.")
+			return False
+
+		new_version = detected_installed_version(mysql_credentials)
+		if new_version == dgq_version:
+			LOGGER.error(f"Update from version {dgq_version} most likely failed. Detected version hasn't changed.")
+			return False
+
+		LOGGER.info(f"Version updated succesfully from {dgq_version} to {new_version}")
+		new_version = dgq_version
+
+	common_funcs.save_toml_config(final_config, app_paths['config_file'])
 
 
 if __name__ == "__main__":
 
-	print("\n"); width = pprinter.print_pattern("DigiQuest UPDATE"); print(); print("#"*width); print()
+	print("\n"); width = common_funcs.print_pattern("DigiQuest UPDATE"); print(); print("#"*width); print()
 
-	logger = get_logger()
+	parser = argparse.ArgumentParser(prog="Synchronizes DigQuest events with external apps")
+	parser.add_argument('-l', '--logging-dir', 
+		help='Directory where log files will be stored', default=os.path.join("/","var","log","digiq")
+	)
+	parser.add_argument('-s', '--services-dir', 
+		help='Directory where digiq service files will be stored', default=os.path.join("/","lib","systemd","system")
+	)
+	parser.add_argument('-q', '--quiet', action="store_true", help='No logging', default=False)
+	args = parser.parse_args()
 
-	cpath = Path(os.path.realpath(__file__))
-	updates_dir = os.path.join(cpath.parent, "updates")
-	if not os.path.isdir(updates_dir):
-		logger.error("Updates scripts not found at ",updates_dir)
+	setattr(__builtins__,'LOGGER', common_funcs.get_logger(args.logging_dir, quiet=args.quiet))
+	app_paths = common_funcs.get_app_paths(Path(os.path.realpath(__file__)).parent)
+
+	if not os.path.isdir(app_paths['updates']):
+		LOGGER.error("Updates scripts not found at ",updates_dir)
 		sys.exit(1)
 
-	try:
-		from core.entity import *
-	except:
-		sys.path.insert(0,str(cpath.parent.parent))
-		from core.entity import *	
-
-	credentials = get_mysql_credentials()
-
-	ALL_VERSIONS = sorted(ALL_VERSIONS, key=lambda x:version.parse(x))
-	dgq_version = detected_installed_version(credentials)
-	if dgq_version == ALL_VERSIONS[-1]:
-		logger.info(f"DigiQuest is already at the lastest version {dgq_version}")
-		sys.exit()
-
-	logger.info(f"DigiQuest installed version detected: {dgq_version}")
-	rspn = input("Update to latest version 1.0.0 ? (y/*)").lower()
-	to_version = LATEST_VERSION
-	if rspn != "y":
-		rspn = input("Update to a specific version ? (y/*)").lower()
-		if rspn != "y":
-			logger.info("Exiting update script.")
-			sys.exit()
-		to_version = input("To which version do you want to update ?")
-
-	if not to_version in ALL_VERSIONS:
-		logger.error(f"Version {version} not found. Available versions are {', '.join(ALL_VERSIONS)}.")
+	if update(app_paths):
+		LOGGER.info("Update successfully completed.")
+	else:
+		LOGGER.error("Update terminated with an error.")
 		sys.exit(1)
-
-	while dgq_version != to_version:
-
-		if not update_from_version(dgq_version, credentials):
-			sys.exit(1)
-
-		new_version = detected_installed_version(credentials)
-		if new_version == dgq_version:
-			logger.error(f"Update from version {dgq_version} most likely failed. Detected version hasn't changed.")
-			sys.exit(1)
-
-		logger.info(f"Version updated succesfully from {dgq_version} to {new_version}")
-		new_version = dgq_version
 
