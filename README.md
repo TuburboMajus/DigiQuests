@@ -27,6 +27,11 @@ systemctl start digiq.timer
 python run.py
 ```
 
+The command **python install/setup.py** may fail if the executing user does not have enough permissions. In this case, execute
+```console
+sudo venv/bin/python install/setup.py
+```
+
 ## update
 
 To update your current version of DigiQuests, stop the server, then go to your DigiQuests directory and do the following:
@@ -38,6 +43,11 @@ pip install --upgrade -r requirements.txt
 python install/update.py # Enter your mysql database credentials
 
 python run.py
+```
+
+The command **python install/update.py** may fail if the executing user does not have enough permissions. In this case, execute
+```console
+sudo venv/bin/python install/update.py
 ```
 
 Check if digiq service is enabled and running:

@@ -5,5 +5,5 @@ UPDATE quest SET owner = (SELECT u.id FROM user u, userAccount ua, accountPrivil
 UPDATE digiQuest SET version = "1.0.0";
 """
 
-def launch_update(dgq_version, app_paths, mysql_credentials=None, **kwargs):
+def launch_update(common_funcs, app_paths, app_config, mysql_credentials=None, **kwargs):
 	return common_funcs.execute_mysql_script(mysql_credentials, MYSQL_CMD)

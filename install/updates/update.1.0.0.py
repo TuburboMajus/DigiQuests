@@ -68,7 +68,7 @@ def install_digiq_services(root_path, virtual_env, logging_dir, services_dir):
 	return True
 
 
-def launch_update(common_funcs, app_paths, mysql_credentials=None, script_args=None, **kwargs):
+def launch_update(common_funcs, app_paths, app_config, mysql_credentials=None, script_args=None, **kwargs):
 	virtual_env = common_funcs.detect_virtual_env(app_paths['root'])
 	logging_dir = script_args.logging_dir if not script_args.quiet else None
 	if not install_digiq_services(app_paths['root'], virtual_env, logging_dir, script_args.services_dir):
