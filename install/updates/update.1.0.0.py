@@ -68,10 +68,25 @@ def install_digiq_services(root_path, virtual_env, logging_dir, services_dir):
 	return True
 
 
+def get_domain_name():
+	domain_name = None
+	while domain_name is None:
+		domain_name = input("Enter the domain name of the app (Ex: digiq.mydomain.com). Leave empty to set it to localhost.")
+		if domain_name == "":
+			domain_name = "127.0.0.1"
+		rpsn = input(f"App's domain name is {domain_name} ? (y/*)").lower()
+		if rpsn != "y":
+			domain_name = None
+	return domain_name
+
+
 def launch_update(common_funcs, app_paths, app_config, mysql_credentials=None, script_args=None, **kwargs):
+	domain_name = get_domain_name()
+
 	virtual_env = common_funcs.detect_virtual_env(app_paths['root'])
 	logging_dir = script_args.logging_dir if not script_args.quiet else None
 	if not install_digiq_services(app_paths['root'], virtual_env, logging_dir, script_args.services_dir):
 		return False
 
+	app_config['app']['blueprints']['google_services']['domain_name'] = domain_name
 	return common_funcs.execute_mysql_script(mysql_credentials, MYSQL_CMD)

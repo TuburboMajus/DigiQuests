@@ -2,7 +2,7 @@ Flask==3.0.2
 Flask_Login==0.6.3
 mysql-connector-python==8.3.0
 packaging==24.0
-temod==2.0.9
+temod==2.0.10
 temod_flask==2.0.4
 toml==0.10.2
 waitress==3.0.0

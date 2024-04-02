@@ -98,6 +98,17 @@ def install_digiq_services(root_path, virtual_env, logging_dir, services_dir):
 	return True
 
 
+def get_domain_name():
+	domain_name = None
+	while domain_name is None:
+		domain_name = input("Enter the domain name of the app (Ex: digiq.mydomain.com). Leave empty to set it to localhost.")
+		if domain_name == "":
+			domain_name = "127.0.0.1"
+		rpsn = input(f"App's domain name is {domain_name} ? (y/*)").lower()
+		if rpsn != "y":
+			domain_name = None
+	return domain_name
+
 def setup(app_paths, args):
 
 	virtual_env = common_funcs.detect_virtual_env(app_paths['root'])
@@ -106,6 +117,7 @@ def setup(app_paths, args):
 		return False
 
 	credentials = common_funcs.get_mysql_credentials()
+	domain_name = get_domain_name()
 
 	already_created = search_existing_database(credentials)
 	if already_created:
@@ -119,6 +131,7 @@ def setup(app_paths, args):
 
 	template_config = common_funcs.load_toml_config(app_paths['template_config_file'])
 	template_config['storage']['credentials'].update(credentials)
+	template_config['app']['blueprints']['google_services']['domain_name'] = domain_name
 	common_funcs.save_toml_config(template_config, app_paths['config_file'])
 
 	install_preset_objects(credentials)

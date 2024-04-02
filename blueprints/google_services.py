@@ -19,7 +19,8 @@ import os
 def setup(configuration):
 	default = {
 		"credentials_file":"resources/gcalendar_creds.json",
-		"tokens_dir":"resources/tokens"
+		"tokens_dir":"resources/tokens",
+		"domain_name":"127.0.0.1"
 	}
 	google_services_blueprint.configuration = {
 		key: configuration.get(key, value) for key,value in default.items()
@@ -46,6 +47,9 @@ google_services_blueprint.setup = setup
 def enableCalendarApi():
 
 	base_url = urlparse(request.base_url)
+	domain_name = get_configuration('domain_name')
+	if domain_name is not None:
+		base_url = domain_name
 	final_url = request.args.get("final_url")
 	redirect_uri_params = ""
 	if final_url is not None:
