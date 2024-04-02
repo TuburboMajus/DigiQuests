@@ -53,27 +53,27 @@ def updateAccount(accountid):
 	current_account = AccountFile.storage.get(id=current_user['id'])
 
 	if account is None:
-		return Response(404)
+		return Response(status=404)
 
 	account_privilege = AccountPrivilege.storage.get(id=current_account['userAccount']['idP'])
 	if account_privilege['label'] != "admin":
-		return Response(403)
+		return Response(status=403)
 
 	data = dict(request.json)
 	if data['updater_password'] != current_account['mdp']:
-		return Response(403)
+		return Response(status=403)
 
 	if data['user']['password'] != data['user']['cpassword']:
-		return Response(400,'Passwords do not match')
+		return Response(status=400, response='Passwords do not match')
 
 	if len(data['user']['password']) < 8:
-		return Response(400,'Password must be 8 characters or more')
+		return Response(status=400, response='Password must be 8 characters or more')
 
 	account.takeSnapshot()
 	account['user']['mdp'] = data['user']['password']
 	AccountFile.storage.updateOnSnapshot(account)
 
-	return Response(200, 'update success')
+	return Response(status=200, response='update success')
 
 
 @users_blueprint.route('/user/gcalendar',methods=['GET'])

@@ -71,7 +71,7 @@ def update(app_paths):
 		return False
 
 	final_config = common_funcs.load_toml_config(app_paths['template_config_file'])
-	while dgq_version != to_version:
+	while  != to_version:
 
 		if not update_from_version(dgq_version, app_paths, common_funcs.merge_configs(final_config, config), mysql_credentials, args):
 			LOGGER.error(f"Update from version {dgq_version} failed.")
@@ -83,7 +83,7 @@ def update(app_paths):
 			return False
 
 		LOGGER.info(f"Version updated succesfully from {dgq_version} to {new_version}")
-		new_version = dgq_version
+		dgq_version = new_version
 
 	common_funcs.save_toml_config(final_config, app_paths['config_file'])
 

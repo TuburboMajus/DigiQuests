@@ -34,7 +34,7 @@ sudo venv/bin/python install/setup.py
 
 ## update
 
-To update your current version of DigiQuests, stop the server, then go to your DigiQuests directory and do the following:
+To update your current version of DigiQuests, stop the server (you may need to backup your digiq databse in case of an error), then go to your DigiQuests directory and do the following:
 
 ```console
 git pull
