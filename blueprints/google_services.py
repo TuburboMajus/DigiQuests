@@ -47,9 +47,11 @@ google_services_blueprint.setup = setup
 def enableCalendarApi():
 
 	base_url = urlparse(request.base_url)
+	scheme = base_url.scheme
+	netloc = base_url.netloc
 	domain_name = get_configuration('domain_name')
 	if domain_name is not None:
-		base_url = domain_name
+		netloc = domain_name
 	final_url = request.args.get("final_url")
 	redirect_uri_params = ""
 	if final_url is not None:
@@ -61,7 +63,7 @@ def enableCalendarApi():
 		scopes=[
 			'https://www.googleapis.com/auth/calendar.app.created',
 			'https://www.googleapis.com/auth/calendar.calendarlist.readonly'
-		],redirect_uri=f"{base_url.scheme}://{base_url.netloc}/gservices/calendar{redirect_uri_params}"
+		],redirect_uri=f"{scheme}://{netloc}/gservices/calendar{redirect_uri_params}"
 	)
 
 	flow = GCalendar.get_service(local=False,code=request.args.get('code'),state=request.args.get('state'))
