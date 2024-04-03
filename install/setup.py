@@ -19,7 +19,7 @@ import toml
 import re
 
 
-APP_VERSION = "1.0.1"
+APP_VERSION = "1.0.2"
 
 
 def search_existing_database(credentials):
@@ -108,6 +108,7 @@ def get_domain_name():
 		if rpsn != "y":
 			domain_name = None
 	return domain_name
+
 
 def setup(app_paths, args):
 

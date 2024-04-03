@@ -1,4 +1,4 @@
-from flask import Flask, Response, request, render_template, redirect
+from flask import Flask, Response, request, render_template, redirect, session
 from flask_login import login_required,login_user,logout_user,current_user
 
 from temod_flask.security.authentification import Authenticator, TemodUserHandler
@@ -93,6 +93,7 @@ def login():
 @app.route('/logout',methods=['GET'])
 @login_required
 def logout():
+	session.clear()
 	AUTHENTICATOR.logout_user(current_user)
 	return redirect('/login')
 # ** EndSection ** AppMainRoutes

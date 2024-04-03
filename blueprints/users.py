@@ -93,7 +93,7 @@ def syncGcalendar():
 	gcalendar = UserGCalendar.storage.get(user=current_user['id'])
 	data = dict(request.form)
 
-	if gcalendar is None:
+	if gcalendar is None or not os.path.isfile(gcalendar['token_file']):
 		return redirect("/gservices/calendar?final_url=/user/gcalendar")
 	else:
 		gcalendar.takeSnapshot().setAttribute("sync",data['sync']=="true")

@@ -18,7 +18,7 @@ import argparse
 import logging
 
 
-ALL_VERSIONS = ["0.0.0","1.0.0","1.0.1"]
+ALL_VERSIONS = ["0.0.0","1.0.0","1.0.1","1.0.2"]
 
 
 def detected_installed_version(credentials):	
@@ -54,7 +54,7 @@ def update(app_paths):
 	dgq_version = detected_installed_version(mysql_credentials)
 	if dgq_version == latest_version:
 		LOGGER.info(f"DigiQuest is already at the lastest version {dgq_version}")
-		return False
+		return True
 
 	LOGGER.info(f"DigiQuest installed version detected: {dgq_version}")
 	rspn = input(f"Update to latest version {latest_version} ? (y/*)").lower()
@@ -71,7 +71,7 @@ def update(app_paths):
 		return False
 
 	final_config = common_funcs.load_toml_config(app_paths['template_config_file'])
-	while  != to_version:
+	while dgq_version != to_version:
 
 		if not update_from_version(dgq_version, app_paths, common_funcs.merge_configs(final_config, config), mysql_credentials, args):
 			LOGGER.error(f"Update from version {dgq_version} failed.")
@@ -86,6 +86,7 @@ def update(app_paths):
 		dgq_version = new_version
 
 	common_funcs.save_toml_config(final_config, app_paths['config_file'])
+	return True
 
 
 if __name__ == "__main__":

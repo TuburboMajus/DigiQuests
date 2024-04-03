@@ -133,6 +133,8 @@
 
   <script type="text/javascript">
 
+    var MyWindow = []
+
     function submitPostViaHiddenForm(url, params, winName) {
         var newWindow = window.open(null, winName);
         var f = $("<form target="+winName+" method='POST' style='display:none;'></form>").attr({
@@ -151,6 +153,7 @@
         f.submit();
         f.remove();
 
+        MyWindow.push(newWindow)
         return newWindow;
     }
 
@@ -162,6 +165,12 @@
     }
 
     function refreshOnGCalendarSync(sync, tab){
+      try{
+        if(tab.window.closed){
+          console.log("Tab has already been closed")
+          return;
+        }
+      }catch(e){console.log(e)}
       let req = new XMLHttpRequest();
       req.onload = function(){
         js = JSON.parse(this.response)

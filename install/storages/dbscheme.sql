@@ -48,6 +48,7 @@ create table userAccount(
 CREATE TABLE userGCalendar (
     user varchar(36) primary key not null,
     calendar varchar(200) not null,
+    token_file varchar(300) not null,
     sync bool not null default 1,
     foreign key (user) references user(id)
 );
