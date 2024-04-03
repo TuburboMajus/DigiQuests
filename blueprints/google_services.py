@@ -104,7 +104,7 @@ def CalendarApiAuth():
 	redirect_uri_params = ""
 	if final_url is not None:
 		redirect_uri_params = f"?final_url={final_url}"
-*
+
 	token_file = os.path.join(get_configuration('tokens_dir'),f"{current_user['id']}.json")
 	GCalendar = GoogleCalendar(
 		token_file=token_file,
