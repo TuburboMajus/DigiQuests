@@ -58,8 +58,9 @@ def enableCalendarApi():
 	if final_url is not None:
 		redirect_uri_params = f"?final_url={final_url}"
 
+	token_file = os.path.join(get_configuration('tokens_dir'),f"{current_user['id']}.json")
 	GCalendar = GoogleCalendar(
-		token_file=os.path.join(get_configuration('tokens_dir'),f"{current_user['id']}.json"),
+		token_file=token_file,
 		credentials_file=get_configuration('credentials_file'),
 		scopes=[
 			'https://www.googleapis.com/auth/calendar.app.created',
@@ -78,7 +79,9 @@ def enableCalendarApi():
 		GCalendar.setCalendar(gcalendar['calendar'])
 	else:
 		GCalendar.getOrCreateCalendar('digiq')
-		UserGCalendar.storage.create(UserGCalendar(user=current_user['id'],calendar=GCalendar.calendarId,sync=True))
+		UserGCalendar.storage.create(UserGCalendar(
+			user=current_user['id'],calendar=GCalendar.calendarId,sync=True, token_file=token_file
+		))
 
 	return redirect(final_url if final_url is not None else "/")
 
@@ -101,9 +104,10 @@ def CalendarApiAuth():
 	redirect_uri_params = ""
 	if final_url is not None:
 		redirect_uri_params = f"?final_url={final_url}"
-
+*
+	token_file = os.path.join(get_configuration('tokens_dir'),f"{current_user['id']}.json")
 	GCalendar = GoogleCalendar(
-		token_file=os.path.join(get_configuration('tokens_dir'),f"{current_user['id']}.json"),
+		token_file=token_file,
 		credentials_file=get_configuration('credentials_file'),
 		scopes=[
 			'https://www.googleapis.com/auth/calendar.app.created',
@@ -120,6 +124,8 @@ def CalendarApiAuth():
 		GCalendar.setCalendar(gcalendar['calendar'])
 	else:
 		GCalendar.getOrCreateCalendar('digiq')
-		UserGCalendar.storage.create(UserGCalendar(user=current_user['id'],calendar=GCalendar.calendarId,sync=True))
+		UserGCalendar.storage.create(UserGCalendar(
+			user=current_user['id'],calendar=GCalendar.calendarId,sync=True, token_file=token_file
+		))
 
 	return redirect(final_url if final_url is not None else "/")
