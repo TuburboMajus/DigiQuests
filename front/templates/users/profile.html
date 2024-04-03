@@ -160,11 +160,12 @@
     function activateGsync(sync){
 
       tab = submitPostViaHiddenForm('/user/gcalendar',{sync:sync===true},'sync')
-      setTimeout(function(){refreshOnGCalendarSync(sync===true,tab)},500)
+      setTimeout(function(){refreshOnGCalendarSync(sync===true,tab,0)},500)
 
     }
 
-    function refreshOnGCalendarSync(sync, tab){
+    function refreshOnGCalendarSync(sync, tab, it){
+      if(it > 100) return;
       try{
         if(tab.window.closed){
           console.log("Tab has already been closed")
@@ -175,7 +176,7 @@
       req.onload = function(){
         js = JSON.parse(this.response)
         if(js['data'] == null || js['data']['sync'] != sync){
-          setTimeout(function(){refreshOnGCalendarSync(sync===true)},1000)
+          setTimeout(function(){refreshOnGCalendarSync(sync===true, tab, it+1)},1000)
         }else{
           if(sync){
             document.getElementById('gsync_image').src = "/static/images/checked.png"

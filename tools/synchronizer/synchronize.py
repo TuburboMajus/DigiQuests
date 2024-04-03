@@ -102,7 +102,7 @@ class GoogleCalendarSynchronizer(object):
 		created = GoogleCalendar(
 			token_file=os.path.join(self.tokens_dir,f"{gcalendar['user']}.json"),
 			credentials_file=self.creds_file,
-			scopes=GOOGLE_CALENDAR_SCORES,
+			scopes=GOOGLE_CALENDAR_SCOPES,
 			calendarId=gcalendar['calendar']
 		).addEvent(GoogleCalendarEvent(
 			task['content'], event['start_date'], event['end_date']
@@ -130,7 +130,7 @@ class GoogleCalendarSynchronizer(object):
 		updated = GoogleCalendar(
 			token_file=os.path.join(self.tokens_dir,f"{gcalendar['user']}.json"),
 			credentials_file=self.creds_file,
-			scopes=GOOGLE_CALENDAR_SCORES,
+			scopes=GOOGLE_CALENDAR_SCOPES,
 			calendarId=gcalendar['calendar']
 		).updateEvent(GoogleCalendarEvent(
 			task['content'], event['start_date'], event['end_date'], id=gevent['gevent_id']
