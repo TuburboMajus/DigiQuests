@@ -45,7 +45,9 @@ app = Flask(
 	static_folder=config['app']['static_folder']
 )
 secret_key = config['app'].get('secret_key','')
-app.secret_key= secret_key if len(secret_key) > 0 else generate_secret_key(32) 
+app.secret_key= secret_key if len(secret_key) > 0 else generate_secret_key(32)
+app.config['CUSTOM_CONFIG'] = {k:v for k,v in config['app'].items() if not type(v) is dict} 
+print("app configuration", app.config)
 temod_core = config['temod']['core_directory']
 init_holders(
 	entities_dir=os.path.join(temod_core,r"entity"),
