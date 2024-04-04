@@ -6,7 +6,7 @@ from tools.google import GoogleCalendar, GoogleCalendarEvent
 from temod.base.condition import Equals, Or, In 
 from temod.base.attribute import UUID4Attribute
 
-from urllib.parse import urlparse
+from urllib.parse import urlparse, ParseResult
 from datetime import datetime
 from pathlib import Path
 
@@ -46,17 +46,16 @@ google_services_blueprint.setup = setup
 @login_required
 def enableCalendarApi():
 
-	base_url = urlparse(request.base_url)
-	scheme = base_url.scheme
-	netloc = base_url.netloc
+	request_url = urlparse(request.url)
+	scheme = request_url.scheme
+	netloc = request_url.netloc
 	domain_name = get_configuration('domain_name')
 	if domain_name is not None:
 		netloc = domain_name
+	if scheme == "http" and current_app.config['CUSTOM_CONFIG']['ssl_encapsulated']:
+		scheme = "https"
 
 	final_url = request.args.get("final_url")
-	redirect_uri_params = ""
-	if final_url is not None:
-		redirect_uri_params = f"?final_url={final_url}"
 
 	token_file = os.path.join(get_configuration('tokens_dir'),f"{current_user['id']}.json")
 	GCalendar = GoogleCalendar(
@@ -94,16 +93,17 @@ def CalendarApiAuth():
 	if request.args.get('state') != session['state']:
 		raise Exception('Invalid state')
 
-	base_url = urlparse(request.base_url)
-	scheme = base_url.scheme
-	netloc = base_url.netloc
+	request_url = urlparse(request.url)
+	authorization_url_args = {"path": request_url.path, "params":request_url.params, "query": request_url.query, "fragment": request_url.fragment}
+	scheme = request_url.scheme
+	netloc = request_url.netloc
 	domain_name = get_configuration('domain_name')
 	if domain_name is not None:
 		netloc = domain_name
-	final_url = request.args.get("final_url")
-	redirect_uri_params = ""
-	if final_url is not None:
-		redirect_uri_params = f"?final_url={final_url}"
+	if scheme == "http" and current_app.config['CUSTOM_CONFIG']['ssl_encapsulated']:
+		scheme = "https"
+	authorization_url_args['netloc'] = netloc
+	authorization_url_args['scheme'] = scheme
 
 	token_file = os.path.join(get_configuration('tokens_dir'),f"{current_user['id']}.json")
 	GCalendar = GoogleCalendar(
@@ -115,7 +115,9 @@ def CalendarApiAuth():
 		],redirect_uri=f"{scheme}://{netloc}/gservices/calendar/auth"
 	)
 
-	if not GCalendar.fetch_creds(session['state'], request.url):
+	authorization_url = ParseResult(**authorization_url_args).geturl()
+
+	if not GCalendar.fetch_creds(session['state'], authorization_url):
 		return "Error occured while authentifiying"
 
 	GCalendar.get_service()
@@ -128,4 +130,4 @@ def CalendarApiAuth():
 			user=current_user['id'],calendar=GCalendar.calendarId,sync=True, token_file=token_file
 		))
 
-	return redirect(final_url if final_url is not None else "/")
+	return "Authentication successfully completed"

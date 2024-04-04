@@ -4,9 +4,11 @@ host = '0.0.0.0'
 port = 33412
 threaded = true
 debug = false
+
 ssl = true
 ssl_key = "resources/key.pem"
 ssl_cert = "resources/cert.pem"
+ssl_encapsulated = false
 
 templates_folder = "front/templates"
 static_folder = "front/static"
