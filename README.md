@@ -9,6 +9,8 @@ The app allows for now for a single user to add, edit & delete quests to the que
 
 ## install
 
+### Fresh installation
+
 - Create the mysql database that will be used by the app. If you use another name than 'digiq' then you'll have to update accordingly the files [config.toml](https://github.com/TuburboMajus/DigiQuests/blob/main/config.toml#L20) and [install/install.py](https://github.com/TuburboMajus/DigiQuests/blob/main/install/install.py#L10)
 - Update the file [config.toml](https://github.com/TuburboMajus/DigiQuests/blob/main/config.toml#L18-L19) by writing the mysql user & password with write privileges on all tables on the database created 
 
@@ -32,7 +34,7 @@ The command **python install/setup.py** may fail if the executing user does not 
 sudo venv/bin/python install/setup.py
 ```
 
-## update
+### update
 
 To update your current version of DigiQuests, stop the server (you may need to backup your digiq databse in case of an error), then go to your DigiQuests directory and do the following:
 
@@ -67,6 +69,56 @@ if digiq.timer is not active execute
 ```console
 systemctl start digiq.timer
 ```
+
+### Run through https
+
+#### Https to http nginx forwarding
+
+The first option to run the server securily is to run it behind a nginx reverse proxy with a ssl context that can be provided by certbot per example.
+You can accomplish this by:
+
+- Setup nginx to [redirect subdomain](https://docs.nginx.com/nginx/admin-guide/web-server/reverse-proxy/) to your http app running on localhost (with ssl configuration set to **false** in your config.toml file). Per example, lets say we've added this configuration:
+```
+server {
+    listen 80;
+    server_name digiq.example.com;
+    location / {
+        proxy_pass http://localhost:1234;
+    }
+}
+```
+
+- Install certbot and run the cmd:
+```console
+sudo certbot --nginx -d digiq.example.com
+```
+Certbot will generate your ssl context and will automatically update your nginx configuration accordingly.
+
+#### Serve https directly
+
+To serve https directely you'll need to generate the ssl context (again can be done using certbot) then provide the file paths, key & certificate, to the config.toml file by updating the parameters **ssl_key** and **ssl_cert** and setting **ssl** to true.
+
+However, this method needs the app config to be set to **prod = false** as waitress does not support serving through https natively. This will be updated in the future.
+
+### Synchronization with external apps
+
+#### Gougle Calendar
+
+To allow the app to synchronize the tasks you create with Google calendar, automatically creating, updating and deleting events, you will need first to setup your app to run in an ssl context as shown above. Then, you'll need to create a google app from you [google dev console](https://console.cloud.google.com/).
+
+* Create a new app.
+* Go to your [apis dashboard](https://console.cloud.google.com/apis/dashboard) and activate the Google Calendar API
+* Setup your [app's consent screen](https://console.cloud.google.com/apis/credentials/consent) according to the nature of your google dev account:
+  * If it is an entreprise account you can't setup your app to be internal and thus all users linked to the account can consent and use the app.
+  * Otherwise, you can setup the app to be in dev and add the emails of your users manually to the testers list or they wont be able to allow the app to access their calendars.
+* Create an OAuth credential of type "Web Application" where you'll need to add the following urls to the *authorized url redirection* section:
+  * https://[app domain name]/gservices/calendar/auth
+  * https://[app domain name]/gservices/calendar
+  * https://[app domain name]
+* Download the generated crendentials on to your server and update your config.toml file to set the parameter **credentials_file** under the section *app.blueprints.google_services* to point to the correct location.
+* Run your server
+
+***NB*** : If you picked the first option (Https to http nginx forwarding) to serve the app through https, you'll need also to update, or add, the parameter **ssl_encapsulation** under the *app* section and set it to true, or the OAuth authentication process will fail. 
 
 ## What's to be done
 
