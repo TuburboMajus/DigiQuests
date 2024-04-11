@@ -18,7 +18,7 @@ import argparse
 import logging
 
 
-ALL_VERSIONS = ["0.0.0","1.0.0","1.0.1","1.0.2"]
+ALL_VERSIONS = ["0.0.0","1.0.0","1.0.1","1.0.2","1.0.3"]
 
 
 def detected_installed_version(credentials):	

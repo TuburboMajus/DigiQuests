@@ -89,7 +89,7 @@ class GoogleCalendar(GoogleService):
 		calendar = calendar if not calendar is None else self.calendarId
 		self.get_service()
 		body = gEvent.to_dict(); body.pop('id')
-		return self.service.events().update(calendarId=calendar, eventId=gEvent.od, body=body).execute()
+		return self.service.events().update(calendarId=calendar, eventId=gEvent.id, body=body).execute()
 
 	def deleteEventById(self, eventId, calendar=None):
 		calendar = calendar if not calendar is None else self.calendarId
@@ -115,6 +115,16 @@ class GoogleCalendarEvent(object):
 		self.recurrence = recurrence
 		self.attendees = attendees
 		self.reminders = reminders
+
+	def from_dict(dct, copy=False):
+		d = dct
+		if copy:
+			d = deepcopy(dct)
+		return GoogleCalendarEvent(
+			d.pop('summary'), d.pop('start_date'), d.pop('end_date'), **{
+				k:v for k,v in d.items() if k in ["id","description","location","recurrence","attendees","reminders"]
+			}
+		)
 
 	def to_dict(self):
 		dct = {

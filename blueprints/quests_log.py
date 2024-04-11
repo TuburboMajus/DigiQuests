@@ -134,18 +134,27 @@ def getQuest(quest_id):
 	active_quest = ActiveQuest.storage.get(user=current_user['id'])
 	tasks = sorted(Task.storage.list(quest=quest['id']),key=lambda x:x['task_order'])
 	events = {event['task']:event for event in Event.storage.list(quest=quest['id'])}
+	locations = list(Location.storage.list())
+	saved_locations = {
+		label: [location for location in locations if location['label'] == label]
+		for label in set([l['label'] for l in locations])
+	}
+	locations = {location['id']: location for location in locations}
+
+	tasks_list = {task['id']:task for task in tasks}
+	for taskId, event in events.items():
+		if(event['location'] in locations):
+			event.setInfo('elocation',locations[event['location']])
+		else:
+			event.setInfo('elocation',event['location'])
+		tasks_list[taskId].setInfo('event',event)
+		
+	quest.setInfo('tasks',sorted(tasks_list.values(),key=lambda x:x['task_order']))
+	quest.setInfo('active',active_quest is not None and quest['id'] == active_quest['quest'])
+	quest.setInfo('key',key)
 
 	if request.args.get("format") == "json":
-		quest = quest.to_dict()
-		tasks_list = {task['id']:task.to_dict() for task in tasks}
-		for taskId, event in events.items():
-			tasks_list[taskId].update({"event": event.to_dict()})
-		quest.update({
-			"active":active_quest is not None and quest['id'] == active_quest['quest'],
-			"tasks":[task for task in sorted(tasks_list.values(),key=lambda x:x['task_order'])],
-			"key":key.to_dict()
-		})
-		return {"data":{"quest":quest}}
+		return {"data":{"quest":quest.to_dict(complements=True)}}
 
 	if key is None or not( 'w' in key['resource_key'] ):
 		return abort(403)
@@ -155,9 +164,7 @@ def getQuest(quest_id):
 	return render_template(
 		str(Path(templates_folder).joinpath('view.html')),
 		quest=quest,
-		tasks=tasks,
-		events=[(e.to_dict() if e is not None else None) for e in events],
-		tasks_data=zip(tasks, events),
+		saved_locations=saved_locations,
 		quests_templates=templates_folder
 	)
 
@@ -167,9 +174,15 @@ def getQuest(quest_id):
 def newQuest():
 
 	templates_folder = quests_log_blueprint.configuration["templates_folder"]
+	locations = list(Location.storage.list())
+	saved_locations = {
+		label: [location for location in locations if location['label'] == label]
+		for label in set([l['label'] for l in locations])
+	}
 	return render_template(
 		str(Path(templates_folder).joinpath('new.html')),
-		quests_templates=templates_folder
+		quests_templates=templates_folder,
+		saved_locations=saved_locations
 	)
 
 
@@ -203,10 +216,12 @@ def createQuest():
 	for i, task in enumerate(tasks):
 		Task.storage.create(task)
 		if data['tasks'][i].get('event',None) is not None:
+			event = data['tasks'][i]['event']
 			Event.storage.create(Event(
 				id=Event.storage.generate_value('id'),task=task['id'], quest=quest['id'],
-				start_date=datetime.fromisoformat(data['tasks'][i]['event']['start_date']),
-				end_date=datetime.fromisoformat(data['tasks'][i]['event']['end_date']),
+				start_date=datetime.fromisoformat(event['start_date']),
+				end_date=datetime.fromisoformat(event['end_date']),
+				location=event['location'],
 				synced=False
 			))
 
@@ -252,6 +267,7 @@ def editQuest(quest_id):
 					id=Event.storage.generate_value('id'),task=task['id'], quest=quest['id'],
 					start_date=datetime.fromisoformat(task['event']['start_date']),
 					end_date=datetime.fromisoformat(task['event']['end_date']),
+					location=task['event']['location'],
 					synced=False
 				))
 			elif task.get('event',None) is None and event is not None:
@@ -261,6 +277,7 @@ def editQuest(quest_id):
 				event.takeSnapshot().setAttributes(
 					start_date=datetime.fromisoformat(task['event']['start_date']),
 					end_date=datetime.fromisoformat(task['event']['end_date']),
+					location=task['event']['location'],
 					synced=False
 				)
 				Event.storage.updateOnSnapshot(event)
@@ -273,6 +290,7 @@ def editQuest(quest_id):
 					id=Event.storage.generate_value('id'), task=new_task['id'], quest=quest['id'],
 					start_date=datetime.fromisoformat(task['event']['start_date']),
 					end_date=datetime.fromisoformat(task['event']['end_date']),
+					location=task['event']['location'],
 					synced=False
 				))
 
@@ -404,12 +422,14 @@ def editTask(task_id):
 			id=Event.storage.generate_value('id'), task=task['id'], quest=quest['id'],
 			start_date=datetime.fromisoformat(eventjs['start_date']),
 			end_date=datetime.fromisoformat(eventjs['end_date']),
+			location=eventjs['location'],
 			synced=False
 		))
 	elif event is not None and eventjs is not None:
 		event.takeSnapshot().setAttributes(
 			start_date=datetime.fromisoformat(eventjs['start_date']),
 			end_date=datetime.fromisoformat(eventjs['end_date']),
+			location=eventjs['location'],
 			synced=False
 		)
 		Event.storage.updateOnSnapshot(event)

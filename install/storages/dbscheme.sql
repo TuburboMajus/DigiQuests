@@ -100,6 +100,7 @@ create table event(
     task varchar(36),
     start_date datetime not null,
     end_date datetime not null,
+    location varchar(250) COLLATE latin1_general_cs,
     synced bool not null default 0,
     constraint unique_event unique (task),
     foreign key (quest) references quest(id),
@@ -113,6 +114,13 @@ create table gevent(
     gevent_id varchar(200) not null,
     foreign key (event) references event(id),
     foreign key (owner) references user(id)
+);
+
+create table location(
+    id varchar(36) primary key not null,
+    name varchar(100) not null,
+    address varchar(250) not null,
+    label varchar(50)
 );
 
 /***** RESOURCE *****/

@@ -60,8 +60,17 @@ class GoogleCalendarSynchronizer(object):
 			"gevents": MysqlEntityStorage(GEvent,**self.mysql_credentials),
 			"resourceKeys": MysqlEntityStorage(ResourceKey,**self.mysql_credentials),
 			"gcalendars": MysqlEntityStorage(UserGCalendar,**self.mysql_credentials),
-			"tasks": MysqlEntityStorage(Task,**self.mysql_credentials)
+			"tasks": MysqlEntityStorage(Task,**self.mysql_credentials),
+			"locations": MysqlEntityStorage(Location,**self.mysql_credentials)
 		}
+
+	def get_event_location(self, event):
+		if event['location'] is None:
+			return None
+		location = self.storages['locations'].get(id=event['location'])
+		if location is None:
+			return event['location']
+		return location['address']
 
 	def delete_event(self,event):
 		gevent = self.storages['gevents'].get(event=event['id'])
@@ -105,7 +114,7 @@ class GoogleCalendarSynchronizer(object):
 			scopes=GOOGLE_CALENDAR_SCOPES,
 			calendarId=gcalendar['calendar']
 		).addEvent(GoogleCalendarEvent(
-			task['content'], event['start_date'], event['end_date']
+			task['content'], event['start_date'], event['end_date'], location=self.get_event_location(event)
 		))
 
 		self.storages['gevents'].create(GEvent(
@@ -133,9 +142,9 @@ class GoogleCalendarSynchronizer(object):
 			scopes=GOOGLE_CALENDAR_SCOPES,
 			calendarId=gcalendar['calendar']
 		).updateEvent(GoogleCalendarEvent(
-			task['content'], event['start_date'], event['end_date'], id=gevent['gevent_id']
+			task['content'], event['start_date'], event['end_date'], id=gevent['gevent_id'], location=self.get_event_location(event)
 		))
-		gevent.setAttribute("id",updated['id'])
+		gevent.setAttribute("gevent_id",updated['id'])
 		self.storages['gevents'].updateOnSnapshot(gevent)
 		LOGGER.info(f"Event {event['id']} updated on gcalendar (event_id: {gevent['gevent_id']})")
 		return True
@@ -144,10 +153,11 @@ class GoogleCalendarSynchronizer(object):
 	def synchronize_event(self,event):
 		if event['task'] is None or event['quest'] is None:
 			result = self.delete_event(event)
-		result = self.update_event(event)
-		event.takeSnapshot()
-		event.setAttribute('synced',True)
-		self.storages['events'].updateOnSnapshot(event)
+		else:
+			result = self.update_event(event)
+			event.takeSnapshot()
+			event.setAttribute('synced',True)
+			self.storages['events'].updateOnSnapshot(event)
 		LOGGER.info(f"Event {event['id']} sync results: {result}")
 		return result
 
@@ -231,7 +241,7 @@ if __name__ == "__main__":
 
 	setattr(__builtins__,'LOGGER', get_logger(args.logging_dir))
 	
-	from core.entity import Event, GEvent, UserGCalendar, Quest, Task, ResourceKey, Job
+	from core.entity import Event, GEvent, UserGCalendar, Quest, Task, ResourceKey, Job, Location
 	from tools.google import GoogleCalendar, GoogleCalendarEvent
 
 	config = load_configs(args.root_dir)

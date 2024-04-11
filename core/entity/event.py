@@ -14,6 +14,7 @@ class Event(Entity):
 		{"name":"quest","type":UUID4Attribute,"required":True},
 		{"name":"start_date","type":DateTimeAttribute,"required":True},
 		{"name":"end_date","type":DateTimeAttribute,"required":True},
+		{"name":"location","type":StringAttribute,"max_length":250},
 		{"name":"synced","type":BooleanAttribute,"required":False, "default_value": False},
 	]
 # ** EndSection ** Entity_Event

@@ -222,6 +222,7 @@ function add_new_task(task){
 	let task_startTime = document.createElement('input')
 	let task_endDate = document.createElement('input')
 	let task_endTime = document.createElement('input')
+	let task_location = document.createElement('input')
 
 	let edit_button = document.createElement('button')
 	let edit_button_img = document.createElement('img')
@@ -233,16 +234,26 @@ function add_new_task(task){
 	let down_button_img = document.createElement('img')
 	let dir_buttons_div = document.createElement('div')
 
-	let has_task = task['event'] != undefined && task['event'] != null
+	let has_event = task['event'] != undefined && task['event'] != null
 
 	task_item.classList.add('editable_task_item')
 	if(task['id'] != undefined) task_item.dataset.task = task['id']
 
-	if(has_task){
+	if(has_event){
 		task_startDate.type = "hidden"; task_startDate.classList.add('task_startDate'); task_startDate.value = task['event']['start']['date']
 		task_startTime.type = "hidden"; task_startTime.classList.add('task_startTime'); task_startTime.value = task['event']['start']['time']
 		task_endDate.type = "hidden"; task_endDate.classList.add('task_endDate'); task_endDate.value = task['event']['end']['date']
 		task_endTime.type = "hidden"; task_endTime.classList.add('task_endTime'); task_endTime.value = task['event']['end']['time']
+		task_location.type = "hidden";task_location.classList.add('task_location');
+		let elocation = task['event']['location']
+		task_location.value = ""
+		if(elocation != null && elocation != undefined){
+			if(typeof(elocation) == "string"){
+				task_location.value = elocation
+			}else{
+				task_location.value = elocation['id']
+			}
+		}
 	}
 
 	task_name.innerHTML = task['content']
@@ -284,9 +295,10 @@ function add_new_task(task){
 	task_item.appendChild(delete_button)
 	task_item.appendChild(dir_buttons_div)
 
-	if(has_task){
+	if(has_event){
 		task_item.appendChild(task_startDate);task_item.appendChild(task_startTime);
 		task_item.appendChild(task_endDate);task_item.appendChild(task_endTime);	
+		task_item.appendChild(task_location);	
 	}
 	tasks_list.insertBefore(task_item, new_task_li)
 }
@@ -301,6 +313,7 @@ function update_new_task(task, task_element_id){
 		try{task_dom.getElementsByClassName('task_startTime')[0].remove()}catch{}
 		try{task_dom.getElementsByClassName('task_endDate')[0].remove()}catch{}
 		try{task_dom.getElementsByClassName('task_endTime')[0].remove()}catch{}
+		try{task_dom.getElementsByClassName('task_location')[0].remove()}catch{}
 	}else{
 		try{task_dom.getElementsByClassName('task_startDate')[0].value = task['event']['start']['date']}
 		catch{
@@ -325,6 +338,19 @@ function update_new_task(task, task_element_id){
 			let task_endTime = document.createElement('input')
 			task_endTime.type = "hidden"; task_endTime.classList.add('task_endTime'); task_endTime.value = task['event']['end']['time']
 			task_dom.appendChild(task_endTime)
+		}
+		let elocation = task['event']['location']
+		try{
+			if(elocation == null){
+				try{task_dom.getElementsByClassName('task_location')[0].remove()}catch{}
+			}else{
+				task_dom.getElementsByClassName('task_location')[0].value = elocation
+			}
+		}
+		catch{
+			let task_location = document.createElement('input')
+			task_location.type = "hidden"; task_location.classList.add('task_location'); task_location.value = elocation
+			task_dom.appendChild(task_location)
 		}
 	}
 }
@@ -397,6 +423,8 @@ function task_from_dom(task_dom){
 
 	let task_startDate = task_dom.getElementsByClassName('task_startDate')[0]
 	if(task_startDate != undefined){
+		let elocation = null
+		try{elocation = task_dom.getElementsByClassName('task_location')[0].value}catch{}
 		task['event'] = {
 			"start":{
 				"date":task_startDate.value,
@@ -404,7 +432,7 @@ function task_from_dom(task_dom){
 			},"end":{
 				"date":task_dom.getElementsByClassName('task_endDate')[0].value,
 				"time":task_dom.getElementsByClassName('task_endTime')[0].value
-			}
+			},"location":elocation
 		}
 	}
 
@@ -416,7 +444,8 @@ function format_task_for_server(task){
 	if(task['event'] != undefined && task['event'] != null){
 		task['event'] = {
 			"start_date":new Date(task['event']['start']['date']+" "+task['event']['start']['time']).toISOString().split('Z')[0],
-			"end_date":new Date(task['event']['end']['date']+" "+task['event']['end']['time']).toISOString().split('Z')[0]
+			"end_date":new Date(task['event']['end']['date']+" "+task['event']['end']['time']).toISOString().split('Z')[0],
+			"location":task['event']['location']
 		}
 		delete task['event']['start']
 		delete task['event']['end']
@@ -424,9 +453,9 @@ function format_task_for_server(task){
 	return task
 }
 
-function format_event_from_server(task, event){
-	if(event == null) {task['event'] = event}
-	else{
+function format_event_from_server(task){
+	if(task['event'] != undefined && task['event'] != null){
+		let event = task['event']
 		let sDate = new Date(event['start_date']+"Z")
 		let eDate = new Date(event['end_date']+"Z")
 		let sMDate = sDate.getMonth()+1;
@@ -445,10 +474,12 @@ function format_event_from_server(task, event){
 			"end":{
 				"date":`${eDate.getFullYear()}-${(eMDate < 10)?'0':''}${eMDate}-${(eDDate < 10)?'0':''}${eDDate}`,
 				"time":`${(eHTime < 10)?'0':''}${eHTime}:${(eMTime < 10)?'0':''}${eMTime}`
-			}
+			},
+			"location":event['elocation']
 		}
+	}else{
+		task['event'] = null
 	}
-	console.log(task)
 	return task
 }
 

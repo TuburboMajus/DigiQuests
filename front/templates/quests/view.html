@@ -79,10 +79,11 @@
 
 {% block postscripts %} 
 <script type="text/javascript">
-	{%- for task, event in tasks_data -%}
-		{% if event is not none%}add_new_task(format_event_from_server({{task.to_dict() | tojson}},{{event.to_dict() | tojson}}));
-		{% else %}add_new_task(format_event_from_server({{task.to_dict() | tojson}}, null))
-		{% endif %}
+	{% for task in quest['tasks'] %}
+		add_new_task(format_event_from_server({{task.to_dict(complements=True) | tojson}}))
 	{% endfor %}
+</script>
+<script type="text/javascript">
+	console.log({{quest.to_dict(complements=True) | tojson}})
 </script>
 {% endblock %}
