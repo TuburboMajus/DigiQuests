@@ -72,6 +72,14 @@ class GoogleCalendarSynchronizer(object):
 			return event['location']
 		return location['address']
 
+	def get_event_reminder(self, event):
+		if event['reminder'] is None:
+			return None
+		return [
+			GoogleCalendarReminder(event['reminder'],channel=GoogleCalendarReminder.EMAIL_REMINDER),
+			GoogleCalendarReminder(event['reminder'],channel=GoogleCalendarReminder.POPUP_REMINDER)
+		]
+
 	def delete_event(self,event):
 		gevent = self.storages['gevents'].get(event=event['id'])
 		if gevent is not None:
@@ -114,7 +122,9 @@ class GoogleCalendarSynchronizer(object):
 			scopes=GOOGLE_CALENDAR_SCOPES,
 			calendarId=gcalendar['calendar']
 		).addEvent(GoogleCalendarEvent(
-			task['content'], event['start_date'], event['end_date'], location=self.get_event_location(event)
+			task['content'], event['start_date'], event['end_date'], 
+			location=self.get_event_location(event),
+			reminders=self.get_event_reminder(event)
 		))
 
 		self.storages['gevents'].create(GEvent(
@@ -142,7 +152,9 @@ class GoogleCalendarSynchronizer(object):
 			scopes=GOOGLE_CALENDAR_SCOPES,
 			calendarId=gcalendar['calendar']
 		).updateEvent(GoogleCalendarEvent(
-			task['content'], event['start_date'], event['end_date'], id=gevent['gevent_id'], location=self.get_event_location(event)
+			task['content'], event['start_date'], event['end_date'], id=gevent['gevent_id'], 
+			location=self.get_event_location(event),
+			reminders=self.get_event_reminder(event)
 		))
 		gevent.setAttribute("gevent_id",updated['id'])
 		self.storages['gevents'].updateOnSnapshot(gevent)
@@ -242,7 +254,7 @@ if __name__ == "__main__":
 	setattr(__builtins__,'LOGGER', get_logger(args.logging_dir))
 	
 	from core.entity import Event, GEvent, UserGCalendar, Quest, Task, ResourceKey, Job, Location
-	from tools.google import GoogleCalendar, GoogleCalendarEvent
+	from tools.google import GoogleCalendar, GoogleCalendarEvent, GoogleCalendarReminder
 
 	config = load_configs(args.root_dir)
 

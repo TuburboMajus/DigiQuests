@@ -101,6 +101,7 @@ create table event(
     start_date datetime not null,
     end_date datetime not null,
     location varchar(250) COLLATE latin1_general_cs,
+    reminder int,
     synced bool not null default 0,
     constraint unique_event unique (task),
     foreign key (quest) references quest(id),

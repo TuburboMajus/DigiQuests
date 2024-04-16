@@ -15,6 +15,7 @@ class Event(Entity):
 		{"name":"start_date","type":DateTimeAttribute,"required":True},
 		{"name":"end_date","type":DateTimeAttribute,"required":True},
 		{"name":"location","type":StringAttribute,"max_length":250},
+		{"name":"reminder","type":IntegerAttribute,"min":0,"max":10080},
 		{"name":"synced","type":BooleanAttribute,"required":False, "default_value": False},
 	]
 # ** EndSection ** Entity_Event

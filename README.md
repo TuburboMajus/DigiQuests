@@ -26,7 +26,7 @@ systemctl enable digiq.service
 systemctl enable digiq.timer
 systemctl start digiq.timer
 
-python run.py
+./run.sh
 ```
 
 The command **python install/setup.py** may fail if the executing user does not have enough permissions. In this case, execute
@@ -44,7 +44,7 @@ cd DigiQuests
 pip install --upgrade -r requirements.txt
 python install/update.py # Enter your mysql database credentials
 
-python run.py
+./run.sh
 ```
 
 The command **python install/update.py** may fail if the executing user does not have enough permissions. In this case, execute
@@ -98,11 +98,9 @@ Certbot will generate your ssl context and will automatically update your nginx 
 
 To serve https directely you'll need to generate the ssl context (again can be done using certbot) then provide the file paths, key & certificate, to the config.toml file by updating the parameters **ssl_key** and **ssl_cert** and setting **ssl** to true.
 
-However, this method needs the app config to be set to **prod = false** as waitress does not support serving through https natively. This will be updated in the future.
-
 ### Synchronization with external apps
 
-#### Gougle Calendar
+#### Google Calendar
 
 To allow the app to synchronize the tasks you create with Google calendar, automatically creating, updating and deleting events, you will need first to setup your app to run in an ssl context as shown above. Then, you'll need to create a google app from you [google dev console](https://console.cloud.google.com/).
 

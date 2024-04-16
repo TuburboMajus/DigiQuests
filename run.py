@@ -47,7 +47,6 @@ app = Flask(
 secret_key = config['app'].get('secret_key','')
 app.secret_key= secret_key if len(secret_key) > 0 else generate_secret_key(32)
 app.config['CUSTOM_CONFIG'] = {k:v for k,v in config['app'].items() if not type(v) is dict} 
-print("app configuration", app.config)
 temod_core = config['temod']['core_directory']
 init_holders(
 	entities_dir=os.path.join(temod_core,r"entity"),
@@ -126,15 +125,10 @@ def check_digiq_service():
 if __name__ == '__main__':
 
 	check_digiq_service()
-
-	if config['app']['prod']:
-		from waitress import serve
-		serve(app, host=config['app']['host'],port=config['app']['port'])
-	else:
-		server_configs = {
-			"host":config['app']['host'], "port":config['app']['port'],
-			"threaded":config['app']['threaded'],"debug":config['app']['debug']
-		}
-		if config['app'].get('ssl',False):
-			server_configs['ssl_context'] = (config['app']['ssl_cert'],config['app']['ssl_key'])
-		app.run(**server_configs)
+	server_configs = {
+		"host":config['app']['host'], "port":config['app']['port'],
+		"threaded":config['app']['threaded'],"debug":config['app']['debug']
+	}
+	if config['app'].get('ssl',False):
+		server_configs['ssl_context'] = (config['app']['ssl_cert'],config['app']['ssl_key'])
+	app.run(**server_configs)

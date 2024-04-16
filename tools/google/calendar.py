@@ -146,10 +146,35 @@ class GoogleCalendarEvent(object):
 		if self.attendees is not None:
 			dct['attendees'] = [{"email":attendee}  for attendee in self.attendees]
 		if self.reminders is not None:
-			dct['reminders'] = self.reminders
+			dct['reminders'] = {
+				"useDefault": False,
+				"overrides": [
+					reminder.to_dict() for reminder in self.reminders
+				]
+			}
+		else:
+			dct['reminders'] = { "useDefault": True }
 		return dct
 
 
+class GoogleCalendarReminder(object):
+	"""docstring for GoogleCalendarReminder"""
 
+	EMAIL_REMINDER = 0
+	POPUP_REMINDER = 1
+	METHODS = ["email","popup"]
+
+	def __init__(self, minutes, channel=None):
+		super(GoogleCalendarReminder, self).__init__()
+		self.channel = GoogleCalendarReminder.EMAIL_REMINDER if not (type(channel) is int) else max(min(channel,1),0)
+		self.timer = minutes
+
+	def to_dict(self):
+		return {
+			"method": GoogleCalendarReminder.METHODS[self.channel],
+			"minutes": self.timer
+		}
+
+		
 
 		

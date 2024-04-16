@@ -21,7 +21,7 @@
               <input type="time" class="form-control" id="ntd_eventEndTime">
               <div><strong>Location:</strong></div>
               <div style="display: inline-flex; width: 100%;">
-                <input type="text" class="form-control" id="ntd_eventLocationInput" data-name="location">
+                <input type="text" class="form-control" id="ntd_eventLocationInput" data-name="location" style="height: auto;">
                 <select id="ntd_eventLocationSelect" class="form-control" style="display: none;">{% for group, locations in saved_locations.items() %}
                   {% if group is none%}
                     {% for location in locations %}<option value="{{location['id']}}">{{location['name']}}</option>{% endfor %}
@@ -31,7 +31,14 @@
                   {% endfor %}</optgroup>
                   {% endif %}
                 {% endfor %}</select>
-                <button class="skr-small-button-img" id="ntd_eventLocationButton" title="Bookmarked locations"><img src="/static/images/bookmark.png" onclick="ntd_changeLocationSelection()"></button>
+                <button class="skr-small-button-img" id="ntd_eventLocationButton" title="Bookmarked locations" onclick="ntd_changeLocationSelection()"><img src="/static/images/bookmark.png"></button>
+              </div>
+              <div><strong>Reminder:</strong></div>
+              <div style="display: inline-flex; width: 100%;">
+                <button class="skr-small-button-img" id="ntd_eventReminderButton" style="margin-left: 0;margin-right: 10px; border: 2px solid white;" onclick="ntd_toggleReminder()"><img src="/static/images/empty.png"  id="ntd_eventReminderCheckbox"></button>
+                <label>before&nbsp;</label>
+                <input type="number" class="form-control" min="0" max="10080" id="ntd_eventReminder" style="height: fit-content; background-color:gray;" disabled>
+                <label>&nbsp;minute(s)</label>
               </div>
             </div>
             <div class="col col-md-2" style="width: fit-content; max-width: fit-content; margin-top: 5px;">
@@ -118,6 +125,10 @@
         document.getElementById('ntd_eventStartTime').classList.add('ntd_ErrorInput')
         ntd_showError("End date can't be before start date"); return false;
       }
+      let reminder = document.getElementById('ntd_eventReminder')
+      if(!reminder.disabled && (reminder.value < 0 || reminder.value > 10080)){
+        ntd_showError("Reminder timer mujst be a number of minutes included between 0 and 10080 (1 week)"); return false;
+      }
     }
     return true
   }
@@ -140,6 +151,7 @@
       let select = document.getElementById('ntd_eventLocationSelect')
       let input = document.getElementById('ntd_eventLocationInput')
       let elocation = null;
+      let reminder = document.getElementById('ntd_eventReminder')
       if(select.dataset.name == "location"){
         elocation = select.selectedOptions[0].value
       }else{
@@ -148,7 +160,8 @@
       task['event'] = {
         "start":{"date":document.getElementById('ntd_eventStartDate').value,"time":document.getElementById('ntd_eventStartTime').value},
         "end":{"date":document.getElementById('ntd_eventEndDate').value,"time":document.getElementById('ntd_eventEndTime').value},
-        "location": (elocation == "" || elocation == undefined)?null:elocation
+        "location": (elocation == "" || elocation == undefined)?null:elocation,
+        "reminder": (reminder.disabled)?null:reminder.value
       }
     }
 
@@ -156,6 +169,24 @@
 
     if (ntd_onTaskConfirmedCallback != null) ntd_onTaskConfirmedCallback(task);
     $('#newTaskDialog').modal('hide')
+  }
+
+  function ntd_toggleReminder(activate){
+    let input = document.getElementById('ntd_eventReminder')
+    let image = document.getElementById('ntd_eventReminderCheckbox')
+    if(activate == null || activate == undefined ){
+      activate = input.disabled
+    }
+
+    if(activate){
+      input.disabled = false;
+      input.style.backgroundColor = "white"
+      image.src = "/static/images/checked.png"
+    }else{
+      input.disabled = true;
+      input.style.backgroundColor = "gray"
+      image.src = "/static/images/empty.png"
+    }
   }
 
   function ntd_changeLocationSelection(mode){
@@ -214,6 +245,7 @@
     eEDate.classList.remove('ntd_ErrorInput'); eEDate.value = ""
     eETime.classList.remove('ntd_ErrorInput'); eETime.value = ""
     ntd_changeLocationSelection(0)
+    ntd_toggleReminder(false)
     document.getElementById('ntd_errorMessage').style.display = "none"
     ntd_deassociateEvent()
   }
@@ -227,7 +259,11 @@
       document.getElementById('ntd_eventEndDate').value = task['event']['end']['date']
       document.getElementById('ntd_eventEndTime').value = task['event']['end']['time']
       let elocation = task['event']['location']
-      console.log(task)
+      let reminder = task['event']['reminder']
+      if(reminder != null){
+        ntd_toggleReminder(true)
+        document.getElementById('ntd_eventReminder').value = task['event']['reminder']
+      }
       if(elocation == null){
         document.getElementById('ntd_eventLocationInput').value = ""
       }else{

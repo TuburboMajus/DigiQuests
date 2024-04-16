@@ -19,7 +19,7 @@ import toml
 import re
 
 
-APP_VERSION = "1.0.3"
+APP_VERSION = "1.0.4"
 
 
 def search_existing_database(credentials):

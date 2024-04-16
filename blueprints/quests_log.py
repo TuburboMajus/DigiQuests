@@ -222,6 +222,7 @@ def createQuest():
 				start_date=datetime.fromisoformat(event['start_date']),
 				end_date=datetime.fromisoformat(event['end_date']),
 				location=event['location'],
+				reminder=event['reminder'],
 				synced=False
 			))
 
@@ -268,6 +269,7 @@ def editQuest(quest_id):
 					start_date=datetime.fromisoformat(task['event']['start_date']),
 					end_date=datetime.fromisoformat(task['event']['end_date']),
 					location=task['event']['location'],
+					reminder=task['event']['reminder'],
 					synced=False
 				))
 			elif task.get('event',None) is None and event is not None:
@@ -278,6 +280,7 @@ def editQuest(quest_id):
 					start_date=datetime.fromisoformat(task['event']['start_date']),
 					end_date=datetime.fromisoformat(task['event']['end_date']),
 					location=task['event']['location'],
+					reminder=task['event']['reminder'],
 					synced=False
 				)
 				Event.storage.updateOnSnapshot(event)
@@ -291,6 +294,7 @@ def editQuest(quest_id):
 					start_date=datetime.fromisoformat(task['event']['start_date']),
 					end_date=datetime.fromisoformat(task['event']['end_date']),
 					location=task['event']['location'],
+					reminder=task['event']['reminder'],
 					synced=False
 				))
 
@@ -423,6 +427,7 @@ def editTask(task_id):
 			start_date=datetime.fromisoformat(eventjs['start_date']),
 			end_date=datetime.fromisoformat(eventjs['end_date']),
 			location=eventjs['location'],
+			reminder=eventjs['reminder'],
 			synced=False
 		))
 	elif event is not None and eventjs is not None:
@@ -430,6 +435,7 @@ def editTask(task_id):
 			start_date=datetime.fromisoformat(eventjs['start_date']),
 			end_date=datetime.fromisoformat(eventjs['end_date']),
 			location=eventjs['location'],
+			reminder=eventjs['reminder'],
 			synced=False
 		)
 		Event.storage.updateOnSnapshot(event)

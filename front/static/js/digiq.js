@@ -223,6 +223,7 @@ function add_new_task(task){
 	let task_endDate = document.createElement('input')
 	let task_endTime = document.createElement('input')
 	let task_location = document.createElement('input')
+	let task_reminder = document.createElement('input')
 
 	let edit_button = document.createElement('button')
 	let edit_button_img = document.createElement('img')
@@ -244,7 +245,8 @@ function add_new_task(task){
 		task_startTime.type = "hidden"; task_startTime.classList.add('task_startTime'); task_startTime.value = task['event']['start']['time']
 		task_endDate.type = "hidden"; task_endDate.classList.add('task_endDate'); task_endDate.value = task['event']['end']['date']
 		task_endTime.type = "hidden"; task_endTime.classList.add('task_endTime'); task_endTime.value = task['event']['end']['time']
-		task_location.type = "hidden";task_location.classList.add('task_location');
+		task_location.type = "hidden"; task_location.classList.add('task_location');
+		task_reminder.type = "hidden"; task_reminder.classList.add('task_reminder');
 		let elocation = task['event']['location']
 		task_location.value = ""
 		if(elocation != null && elocation != undefined){
@@ -253,6 +255,11 @@ function add_new_task(task){
 			}else{
 				task_location.value = elocation['id']
 			}
+		}
+		let reminder = task['event']['reminder']
+		task_reminder.value = ""
+		if(reminder != null && reminder != undefined){
+			task_reminder.value = reminder
 		}
 	}
 
@@ -296,9 +303,9 @@ function add_new_task(task){
 	task_item.appendChild(dir_buttons_div)
 
 	if(has_event){
-		task_item.appendChild(task_startDate);task_item.appendChild(task_startTime);
-		task_item.appendChild(task_endDate);task_item.appendChild(task_endTime);	
-		task_item.appendChild(task_location);	
+		task_item.appendChild(task_startDate); task_item.appendChild(task_startTime);
+		task_item.appendChild(task_endDate); task_item.appendChild(task_endTime);	
+		task_item.appendChild(task_location); task_item.appendChild(task_reminder);	
 	}
 	tasks_list.insertBefore(task_item, new_task_li)
 }
@@ -314,6 +321,7 @@ function update_new_task(task, task_element_id){
 		try{task_dom.getElementsByClassName('task_endDate')[0].remove()}catch{}
 		try{task_dom.getElementsByClassName('task_endTime')[0].remove()}catch{}
 		try{task_dom.getElementsByClassName('task_location')[0].remove()}catch{}
+		try{task_dom.getElementsByClassName('task_reminder')[0].remove()}catch{}
 	}else{
 		try{task_dom.getElementsByClassName('task_startDate')[0].value = task['event']['start']['date']}
 		catch{
@@ -351,6 +359,19 @@ function update_new_task(task, task_element_id){
 			let task_location = document.createElement('input')
 			task_location.type = "hidden"; task_location.classList.add('task_location'); task_location.value = elocation
 			task_dom.appendChild(task_location)
+		}
+		let reminder = task['event']['reminder']
+		try{
+			if(reminder == null){
+				try{task_dom.getElementsByClassName('task_reminder')[0].remove()}catch{}
+			}else{
+				task_dom.getElementsByClassName('task_reminder')[0].value = reminder
+			}
+		}
+		catch{
+			let task_reminder = document.createElement('input')
+			task_reminder.type = "hidden"; task_reminder.classList.add('task_reminder'); task_reminder.value = reminder
+			task_dom.appendChild(task_reminder)
 		}
 	}
 }
@@ -425,6 +446,11 @@ function task_from_dom(task_dom){
 	if(task_startDate != undefined){
 		let elocation = null
 		try{elocation = task_dom.getElementsByClassName('task_location')[0].value}catch{}
+		let reminder = null
+		try{
+			reminder = parseInt(task_dom.getElementsByClassName('task_reminder')[0].value)
+			if(isNaN(reminder)) reminder = null;
+		}catch{}
 		task['event'] = {
 			"start":{
 				"date":task_startDate.value,
@@ -432,7 +458,8 @@ function task_from_dom(task_dom){
 			},"end":{
 				"date":task_dom.getElementsByClassName('task_endDate')[0].value,
 				"time":task_dom.getElementsByClassName('task_endTime')[0].value
-			},"location":elocation
+			},"location":elocation,
+			"reminder": reminder
 		}
 	}
 
@@ -445,7 +472,8 @@ function format_task_for_server(task){
 		task['event'] = {
 			"start_date":new Date(task['event']['start']['date']+" "+task['event']['start']['time']).toISOString().split('Z')[0],
 			"end_date":new Date(task['event']['end']['date']+" "+task['event']['end']['time']).toISOString().split('Z')[0],
-			"location":task['event']['location']
+			"location":task['event']['location'],
+			"reminder":task['event']['reminder']
 		}
 		delete task['event']['start']
 		delete task['event']['end']
@@ -475,7 +503,8 @@ function format_event_from_server(task){
 				"date":`${eDate.getFullYear()}-${(eMDate < 10)?'0':''}${eMDate}-${(eDDate < 10)?'0':''}${eDDate}`,
 				"time":`${(eHTime < 10)?'0':''}${eHTime}:${(eMTime < 10)?'0':''}${eMTime}`
 			},
-			"location":event['elocation']
+			"location":event['elocation'],
+			"reminder":event['reminder']
 		}
 	}else{
 		task['event'] = null
