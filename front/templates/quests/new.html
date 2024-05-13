@@ -27,6 +27,15 @@
 						<form>
 							<div class="fields">
 								<div class="field half">
+									<label for="name">Storyline</label>
+									<select name="storyline" id="new_quest_storyline">
+									<option value="" selected>No Storyline</option>
+									{% for storyline in storylines %}
+										<option value="{{storyline['id']}}">{{storyline['title']}}</option>
+									{% endfor %}
+									</select>
+								</div>
+								<div class="field half">
 									<label for="name">Quest Name</label>
 									<input type="text" name="name" id="new_quest_title" />
 								</div>

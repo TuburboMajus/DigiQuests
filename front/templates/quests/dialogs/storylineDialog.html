@@ -1,0 +1,18 @@
+<div class="modal" tabindex="-1" id="newStorylineDialog">
+  <div class="modal-dialog">
+    <div class="modal-content" style="background-color: #252a2f;"><form method="post" action="/storyline">
+      <div class="modal-header">
+        <h5 class="modal-title">New Storyline</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+          <input type="text" name="title" id="nsld_title" placeholder="Storyline Title..." />
+      </div>
+      <div class="modal-footer">
+        <div id="ntd_errorMessage" class="form-control" style="color: red; display: none;"></div>
+        <button type="button" class="button" style="background: #514545; border-radius: 5px !important; color: white !important;width: fit-content;" data-bs-dismiss="modal">Cancel</button>
+        <button id="ntd_confirmButton" type="submit" class="button" style="background: black; border-radius: 5px !important; color: white !important;width: fit-content;">Add</button>
+      </div>
+    </form></div>
+  </div>
+</div>

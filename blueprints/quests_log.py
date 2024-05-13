@@ -1,4 +1,4 @@
-from flask import Blueprint, Response, current_app, request, render_template, abort, redirect
+from flask import Blueprint, Response, current_app, request, render_template, abort, redirect, url_for
 from flask_login import current_user, login_required
 
 from temod.base.condition import Equals, Or, In 
@@ -37,6 +37,19 @@ quests_log_blueprint = Blueprint('quests_log', __name__)
 quests_log_blueprint.setup = setup
 
 
+@quests_log_blueprint.route("/storyline",methods=["POST"])
+@login_required
+def addStoryline():
+	form = dict(request.form)
+	storyline = Storyline.storage.get(title=form['title'])
+	if storyline is None:
+		Storyline.storage.create(Storyline(
+			id=Storyline.storage.generate_value('id'),
+			title=form['title']
+		))
+	return redirect(url_for("quests_log.getQuests"))
+
+
 @quests_log_blueprint.route("/quests",methods=["GET"])
 @login_required
 def getQuests():
@@ -45,17 +58,25 @@ def getQuests():
 		resource_type="quest"
 	))
 
+	storyline = request.args.get('line',None)
+	storyline = Storyline.storage.get(id=storyline)
+	search = {}
+	if storyline is not None:
+		search = {"storyline":storyline['id']}
+
 	incomplete_quests = []; complete_quests = []
 	if len(keys) > 0:
 		incomplete_quests = list(Quest.storage.list(
 			In("id",*[UUID4Attribute("id",value=key['resource']) for key in keys]),
 			complete=False,
-			archived=False
+			archived=False,
+			**search
 		))
 		complete_quests = list(Quest.storage.list(
 			In("id",*[UUID4Attribute("id",value=key['resource']) for key in keys]),
 			complete=True,
-			archived=False
+			archived=False,
+			**search
 		))
 
 	active_quest = ActiveQuest.storage.get(user=current_user['id'])
@@ -66,13 +87,16 @@ def getQuests():
 
 	selected_quest = None; selected_quest_tasks = []; selected_quest_key = None
 	if selected_quest_id is not None:
-		selected_quest = Quest.storage.get(id=selected_quest_id)
-		selected_quest_tasks = sorted(Task.storage.list(quest=selected_quest_id),key=lambda t:t['task_order'])
-		selected_quest_key = [key for key in keys if key['resource'] == selected_quest_id][0]
+		selected_quest = Quest.storage.get(id=selected_quest_id, **search)
+		if selected_quest is not None:
+			selected_quest_tasks = sorted(Task.storage.list(quest=selected_quest_id),key=lambda t:t['task_order'])
+			selected_quest_key = [key for key in keys if key['resource'] == selected_quest_id][0]
 
 	templates_folder = quests_log_blueprint.configuration["templates_folder"]
 	return render_template(
 		str(Path(templates_folder).joinpath('list.html')),
+		storylines=list(Storyline.storage.list()),
+		selected_storyline=storyline,
 		active_quest=active_quest,
 		quests_templates=templates_folder,
 		selected_quest=selected_quest,
@@ -163,6 +187,7 @@ def getQuest(quest_id):
 	events = [events.get(task['id'],None) for task in tasks]
 	return render_template(
 		str(Path(templates_folder).joinpath('view.html')),
+		storylines=list(Storyline.storage.list()),
 		quest=quest,
 		saved_locations=saved_locations,
 		quests_templates=templates_folder
@@ -181,6 +206,7 @@ def newQuest():
 	}
 	return render_template(
 		str(Path(templates_folder).joinpath('new.html')),
+		storylines=list(Storyline.storage.list()),
 		quests_templates=templates_folder,
 		saved_locations=saved_locations
 	)
@@ -195,6 +221,7 @@ def createQuest():
 	quest = Quest(
 		id=Quest.storage.generate_value('id'),
 		owner=current_user['id'],
+		storyline=data['storyline'],
 		title=data['title'],
 		description=data['description'],
 		complete=False,
@@ -299,7 +326,8 @@ def editQuest(quest_id):
 				))
 
 	quest.setAttributes(
-		title=data['title'],description=data['description'],reccurence=Quest.RECCURENCES[data['periodicity']['type']],
+		title=data['title'],description=data['description'], storyline=data['storyline'],
+		reccurence=Quest.RECCURENCES[data['periodicity']['type']],
 		reccurence_config=data['periodicity'].get("configs",None)
 	)
 	Quest.storage.updateOnSnapshot(quest)

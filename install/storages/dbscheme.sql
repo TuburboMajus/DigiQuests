@@ -55,8 +55,14 @@ CREATE TABLE userGCalendar (
 
 /***** QUESTS *****/
 
+create table storyline(
+    id varchar(36) primary key not null,
+    title varchar(100) not null
+);
+
 create table quest(
     id varchar(36) primary key not null,
+    storyline varchar(36),
     owner varchar(36) not null,
     title varchar(100) not null,
     description varchar(500),
@@ -64,7 +70,8 @@ create table quest(
     archived bool not null default 0,
     reccurence int not null default 0,
     reccurence_config varchar(250),
-    foreign key (owner) references user(id)
+    foreign key (owner) references user(id),
+    foreign key (storyline) references storyline(id)
 );
 
 create table task(

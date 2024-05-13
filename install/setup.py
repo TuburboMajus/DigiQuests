@@ -19,7 +19,7 @@ import toml
 import re
 
 
-APP_VERSION = "1.0.4"
+APP_VERSION = "1.0.5"
 
 
 def search_existing_database(credentials):
@@ -126,7 +126,7 @@ def setup(app_paths, args):
 			LOGGER.warning("If you which to just update the app, run the script install/update.py")
 			return False
 
-	with open(app_paths[Path'mysql_schema_file']) as file:
+	with open(app_paths['mysql_schema_file']) as file:
 		if not common_funcs.execute_mysql_script(credentials, file.read().replace("$database",credentials['database'])):
 			return False
 

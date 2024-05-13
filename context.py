@@ -2,6 +2,7 @@ from temod.ext.holders import clusters, joins, entities
 from temod_flask.ext import _readers_holder as _FormReaders
 from temod.storage.directory import DirectoryStorage
 
+import random
 
 def init_context(config):
 	
@@ -22,3 +23,13 @@ def init_context(config):
 		if name in __builtins__:
 			print(f'Warning: cannot register cluster {name} in the global context as {name} is already used');continue
 		__builtins__[name] = cluster
+
+
+# ** Section ** GenerateSecretKey
+def generate_secret_key(length=8):
+	alphabet = "abcdefghijklmnopqrstuvwxyz0123456789?!,;:./§$£*µù%+=°)àç_è-('é&²~"
+	return "".join([
+		getattr(alphabet[random.randint(0,len(alphabet)-1)],["upper","lower"][random.randint(0,1)])()
+		for _ in range(length)
+	])
+# ** EndSection ** GenerateSecretKey

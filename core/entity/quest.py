@@ -5,11 +5,22 @@ from copy import deepcopy
 # ** EndSection ** Imports
 
 
+# ** Section ** Entity_Storyline
+class Storyline(Entity):
+	ENTITY_NAME = "storyline"
+	ATTRIBUTES = [
+		{"name":"id","type":UUID4Attribute,"required":True,"is_id":True,"is_nullable":False},
+		{"name":"title","type":StringAttribute,"required":True,"non_empty":True,"max_length":100,"is_nullable":False}
+	]
+# ** EndSection ** Entity_Storyline
+
+
 # ** Section ** Entity_Quest
 class Quest(Entity):
 	ENTITY_NAME = "quest"
 	ATTRIBUTES = [
 		{"name":"id","type":UUID4Attribute,"required":True,"is_id":True,"is_nullable":False},
+		{"name":"storyline","type":UUID4Attribute},
 		{"name":"owner","type":UUID4Attribute,"required":True,"is_nullable":False},
 		{"name":"title","type":StringAttribute,"required":True,"non_empty":True,"max_length":100,"is_nullable":False},
 		{"name":"description","type":StringAttribute,"max_length":500},

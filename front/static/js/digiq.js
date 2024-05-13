@@ -4,6 +4,16 @@ function on_task_checkbox_click(){
 	set_task_complete(this.dataset.task, this.dataset.complete!="true")
 }
 
+function on_storyline_selected(storyline){
+	let curl = new URL(window.location.href)
+	if (curl.searchParams.get('line') == undefined || curl.searchParams.get('line') == null){
+		curl.searchParams.append("line",storyline)
+	}else{
+		curl.searchParams.set("line",storyline)
+	}
+	window.location.href = curl.toString()
+}
+
 function on_sidebar_quest_click(questid){
 	select_quest(questid)
 	event.stopPropagation()
@@ -533,6 +543,10 @@ function create_new_quest(){
 	).map( 
 		y => format_task_for_server(task_from_dom(y))
 	)
+	quest['storyline'] = document.getElementById('new_quest_storyline').value
+	if(quest['storyline'] == ""){
+		quest['storyline'] = null
+	}
 
 	errors = validate_quest(quest)
 	if(errors.length == 0){
@@ -568,6 +582,10 @@ function edit_quest(questid){
 	).map( 
 		y => format_task_for_server(task_from_dom(y))
 	)
+	quest['storyline'] = document.getElementById('new_quest_storyline').value
+	if(quest['storyline'] == ""){
+		quest['storyline'] = null
+	}
 
 	errors = validate_quest(quest)
 	if(errors.length == 0){

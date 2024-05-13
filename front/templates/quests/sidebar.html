@@ -1,7 +1,17 @@
 <!-- Sidebar -->
 <section id="sidebar" class="skr-style" style="padding-top: 0px;">
 	<div class="inner">
-		<nav>
+		<ul style="position: absolute; top: 0px; left: 20px; width: 100%;" class="quest_sidebar_item">
+			<div class="row"><div class="col col-md-10"><select style="border: 2px solid white;" onchange="on_storyline_selected(this.value)">
+				<option value="" {% if selected_storyline is none%}selected{% endif %}>All Storylines</option>
+				{% for storyline in storylines %}
+					<option value="{{storyline['id']}}" {% if selected_storyline['id'] == storyline['id'] %}selected{% endif %}>{{storyline['title']}}</option>
+				{% endfor %}
+			</select></div><div class="col col-md-2" style="margin-top: 10px; padding: 0;">
+				<button class="skr-small-button-img" title="New storyline"><img src="/static/images/plus.png" data-bs-target="#newStorylineDialog" data-bs-toggle="modal"></button>
+			</div></div>
+		</ul>
+		<nav style="margin-top: 60px;">
 			<ul id="incomplete_quests_list">
 				{% for quest in incomplete_quests %}
 					<li class="quest_sidebar_item {% if selected_quest['id'] == quest['id'] %}selected{% else %}unselected{% endif %}" data-quest="{{quest['id']}}">
@@ -27,4 +37,6 @@
 			</ul>
 		</nav>
 	</div>
+
+	{% include quests_templates+"/dialogs/storylineDialog.html" %}
 </section>
